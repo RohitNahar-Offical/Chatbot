@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Stra AI — Tactical Defense & Cyber Intelligence Strategic Platform. Real-time RAG intelligence retrieval and operational analytics.">
+    <title>STRA AI // Defense & Cyber Intelligence Platform</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+
+    <!-- Stylesheets -->
+    <link rel="stylesheet" href="/static/css/style.css">
+
+    <!-- Markdown & Code Highlight Support -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+</head>
+<body class="tactical-hud-theme">
+
+    <div class="scanline-overlay"></div>
+    <div class="grid-background"></div>
+
+    <!-- MAIN INTERFACE CONTAINER -->
+    <div class="app-layout">
+
+        <!-- TOP NAVIGATION & STATUS BAR -->
+        <header class="tactical-header" id="header-bar">
+            <div class="brand-zone">
+                <div class="tactical-badge">
+                    <span class="radar-pulse"></span>
+                    <span class="badge-text">STRA-INTEL</span>
+                </div>
+                <h1 class="brand-title">STRA AI <span class="version-tag">v1.0 Phase 1A</span></h1>
+            </div>
+
+            <div class="status-zone">
+                <div class="status-indicator-pill" id="system-status-pill">
+                    <span class="indicator-dot online"></span>
+                    <span id="status-text">SYSTEM ONLINE // SECURE</span>
+                </div>
+                <div class="hud-time-display" id="hud-clock">00:00:00 UTC</div>
+            </div>
+        </header>
+
+        <!-- DASHBOARD BODY CONTAINER -->
+        <div class="dashboard-body">
+
+            <!-- SIDEBAR: CONTROLS & INTEL STREAMS -->
+            <aside class="tactical-sidebar" id="sidebar-panel">
+                
+                <div class="sidebar-section">
+                    <h2 class="sidebar-label">OPERATIONAL CONTROLS</h2>
+                    
+                    <button class="tactical-btn primary-btn" id="btn-new-session">
+                        <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M12 5v14M5 12h14"/>
+                        </svg>
+                        <span>NEW INTEL SESSION</span>
+                    </button>
+                </div>
+
+                <div class="sidebar-section">
+                    <h2 class="sidebar-label">MODEL CONFIGURATION</h2>
+                    <div class="config-group">
+                        <label for="select-model" class="field-label">TARGET AI ENGINE</label>
+                        <select id="select-model" class="tactical-select">
+                            <option value="gpt-4.1-nano-2025-04-14" selected>GPT-4.1 Nano (Strategic Fast)</option>
+                            <option value="gpt-4o">GPT-4o (Full Intel Core)</option>
+                            <option value="gpt-4o-mini">GPT-4o Mini (Tactical Edge)</option>
+                            <option value="llama3.1:latest">Llama 3.1 (Local Ollama)</option>
+                        </select>
+                    </div>
+
+                    <div class="config-group toggle-group">
+                        <div class="toggle-info">
+                            <span class="field-label">RAG RETRIEVAL LAYER</span>
+                            <span class="field-subtext">Curated Defense/Cyber DB</span>
+                        </div>
+                        <label class="tactical-switch">
+                            <input type="checkbox" id="toggle-rag" checked>
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+
+                    <div class="config-group toggle-group">
+                        <div class="toggle-info">
+                            <span class="field-label">WEB SEARCH LAYER</span>
+                            <span class="field-subtext">Live Internet Intelligence</span>
+                        </div>
+                        <label class="tactical-switch">
+                            <input type="checkbox" id="toggle-web-search" checked>
+                            <span class="slider web-slider"></span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="sidebar-section">
+                    <h2 class="sidebar-label">TACTICAL PROMPT MODULES</h2>
+                    <div class="prompt-chips">
+                        <button class="chip-btn" data-prompt="Perform a MITRE ATT&CK TTP analysis on initial access and lateral movement tactics for ransomware operations.">
+                            🛡️ Cyber Threat Analysis
+                        </button>
+                        <button class="chip-btn" data-prompt="Detail the OSINT verification matrix for authenticating geospatial imagery and digital footprinting.">
+                            🛰️ OSINT Recon Workflow
+                        </button>
+                        <button class="chip-btn" data-prompt="Summarize CISA critical vulnerability handling protocols and Zero Trust architecture requirements.">
+                            ⚡ CISA & Zero Trust Protocol
+                        </button>
+                        <button class="chip-btn" data-prompt="Provide a technical summary of STANAG 4586 and Link 16 tactical data link communications.">
+                            📡 Tactical Defense Standards
+                        </button>
+                    </div>
+                </div>
+
+                <div class="sidebar-section kb-sources-section">
+                    <h2 class="sidebar-label">KNOWLEDGE BASE SOURCES (<span id="kb-count">4</span>)</h2>
+                    <div class="kb-source-list" id="kb-source-container">
+                        <div class="source-item">
+                            <span class="source-tag">CYBER</span>
+                            <span class="source-name">MITRE ATT&CK TTP Matrix</span>
+                        </div>
+                        <div class="source-item">
+                            <span class="source-tag">CISA</span>
+                            <span class="source-name">CISA Vulnerability Advisories</span>
+                        </div>
+                        <div class="source-item">
+                            <span class="source-tag">OSINT</span>
+                            <span class="source-name">OSINT Collection Workflow</span>
+                        </div>
+                        <div class="source-item">
+                            <span class="source-tag">DEFENSE</span>
+                            <span class="source-name">Defense Tech & Tactical Links</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="sidebar-footer">
+                    <div class="security-classification-tag">
+                        [ UNCLASSIFIED // STRA-INTEL ]
+                    </div>
+                </div>
+
+            </aside>
+
+            <!-- MAIN CHAT & RESPONSE STAGE -->
+            <main class="tactical-stage" id="chat-stage">
+                
+                <!-- MESSAGES STREAM CONTAINER -->
+                <div class="chat-thread" id="chat-thread">
+                    
+                    <!-- INITIAL WELCOME BANNER -->
+                    <div class="welcome-card" id="welcome-card">
+                        <div class="card-hud-header">
+                            <span class="card-icon">⚡</span>
+                            <h3>STRA AI TACTICAL INTELLIGENCE CORE INITIALIZED</h3>
+                        </div>
+                        <p class="welcome-text">
+                            Welcome, Analyst. Stra AI is online with OpenAI streaming integration, proprietary prompt guardrails, curated defense & cyber threat RAG retrieval, and <strong>live web search intelligence</strong>.
+                        </p>
+                        <div class="welcome-grid">
+                            <div class="welcome-feature">
+                                <span class="feature-title">🔒 Security Controls</span>
+                                <span class="feature-desc">Active rate limiting & structured audit logging.</span>
+                            </div>
+                            <div class="welcome-feature">
+                                <span class="feature-title">📚 Knowledge Retrieval</span>
+                                <span class="feature-desc">MITRE ATT&CK, CISA Advisories, OSINT, and Defense Standards.</span>
+                            </div>
+                            <div class="welcome-feature">
+                                <span class="feature-title">🌐 Live Web Search</span>
+                                <span class="feature-desc">Real-time DuckDuckGo internet intelligence for current events & threats.</span>
+                            </div>
+                            <div class="welcome-feature">
+                                <span class="feature-title">🏷️ Source Citations</span>
+                                <span class="feature-desc">Automatic inline context references & citation cards.</span>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- RAG CITATIONS PANEL / DRAWER -->
+                <div class="citations-bar hidden" id="citations-bar">
+                    <div class="citations-header">
+                        <span class="citations-title">🔍 RETRIEVED INTELLIGENCE SOURCES</span>
+                        <button class="close-citations" id="btn-close-citations">&times;</button>
+                    </div>
+                    <div class="citations-list" id="citations-list"></div>
+                </div>
+
+                <!-- WEB CITATIONS PANEL / DRAWER -->
+                <div class="citations-bar web-citations-bar hidden" id="web-citations-bar">
+                    <div class="citations-header">
+                        <span class="citations-title">🌐 LIVE WEB INTELLIGENCE SOURCES</span>
+                        <button class="close-citations" id="btn-close-web-citations">&times;</button>
+                    </div>
+                    <div class="citations-list" id="web-citations-list"></div>
+                </div>
+
+                <!-- INPUT & CONTROL BAR -->
+                <div class="input-stage">
+                    <div class="input-panel-wrapper">
+                        
+                        <div class="input-header-status">
+                            <span class="channel-text">SECURE CHANNEL // PROMPT ENGINE v1</span>
+                            <span class="typing-status hidden" id="typing-indicator">
+                                <span class="pulse-dot"></span> STRA AI ANALYZING INTEL STREAM...
+                            </span>
+                        </div>
+
+                        <form id="chat-form" class="chat-form">
+                            <textarea 
+                                id="user-input" 
+                                class="tactical-textarea" 
+                                placeholder="Enter tactical query, threat intelligence request, or OSINT prompt..." 
+                                rows="2"
+                                required></textarea>
+                            
+                            <div class="input-action-buttons">
+                                <button type="button" id="btn-stop" class="tactical-btn stop-btn hidden">
+                                    <span>ABORT</span>
+                                </button>
+                                <button type="submit" id="btn-send" class="tactical-btn send-btn">
+                                    <span>EXECUTE</span>
+                                    <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <line x1="22" y1="2" x2="11" y2="13"></line>
+                                        <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                                    </svg>
+                                </button>
+                            </div>
+                        </form>
+
+                    </div>
+                </div>
+
+            </main>
+
+        </div>
+
+    </div>
+
+    <!-- Scripts -->
+    <script src="/static/js/app.js"></script>
+</body>
+</html>
