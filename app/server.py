@@ -1,7 +1,14 @@
 import os
+import sys
 import json
 import asyncio
 from typing import List, Dict, Any, Optional
+
+# Ensure project root is in sys.path so imports like 'from app...' work when run directly
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if BASE_DIR not in sys.path:
+    sys.path.insert(0, BASE_DIR)
+
 from fastapi import FastAPI, Request, HTTPException, Depends
 from fastapi.responses import HTMLResponse, StreamingResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
@@ -18,6 +25,7 @@ from app.web_search import WebSearchEngine, query_needs_web_search
 
 # Load environment variables
 load_dotenv()
+
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 KNOWLEDGE_DIR = os.path.join(BASE_DIR, "knowledge_base")
@@ -247,3 +255,8 @@ async def chat_stream_endpoint(payload: ChatStreamRequest, request: Request):
             security_control.log_audit("STREAM_ERROR", client_ip, {"error": str(e), "model": payload.model})
 
     return StreamingResponse(sse_event_generator(), media_type="text/event-stream")
+
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run("app.server:app", host="127.0.0.1", port=8000, reload=True)

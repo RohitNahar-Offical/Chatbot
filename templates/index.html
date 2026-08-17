@@ -1,46 +1,76 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Stra AI — Tactical Defense & Cyber Intelligence Strategic Platform. Real-time RAG intelligence retrieval and operational analytics.">
-    <title>STRA AI // Defense & Cyber Intelligence Platform</title>
+    <meta name="description"
+        content="STRA AI — Next-Generation Defense & Cyber Threat Intelligence Operating Platform. Real-time RAG retrieval, live web search intelligence, and tactical analytical streaming.">
+    <title>STRA AI // Defense & Cyber Intelligence Operating Platform</title>
 
-    <!-- Google Fonts -->
+    <!-- Preconnect for performance -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
 
-    <!-- Stylesheets -->
+    <!-- Premium Google Fonts: Plus Jakarta Sans + Inter + JetBrains Mono -->
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet">
+
+    <!-- Main Stylesheet -->
     <link rel="stylesheet" href="/static/css/style.css">
 
-    <!-- Markdown & Code Highlight Support -->
+    <!-- Markdown Parser -->
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 </head>
+
 <body class="tactical-hud-theme">
 
-    <div class="scanline-overlay"></div>
-    <div class="grid-background"></div>
+    <!-- Ambient Visual Overlay Effects -->
+    <div class="ambient-glow-top" aria-hidden="true"></div>
+    <div class="ambient-glow-bottom" aria-hidden="true"></div>
+    <div class="grid-background" aria-hidden="true"></div>
+    <div class="scanline-overlay" aria-hidden="true"></div>
 
     <!-- MAIN INTERFACE CONTAINER -->
     <div class="app-layout">
 
         <!-- TOP NAVIGATION & STATUS BAR -->
-        <header class="tactical-header" id="header-bar">
+        <header class="tactical-header" id="header-bar" role="banner">
             <div class="brand-zone">
-                <div class="tactical-badge">
-                    <span class="radar-pulse"></span>
-                    <span class="badge-text">STRA-INTEL</span>
+                <button class="mobile-menu-toggle" id="btn-toggle-sidebar" type="button" aria-label="Toggle Navigation Sidebar">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="3" y1="12" x2="21" y2="12"></line>
+                        <line x1="3" y1="6" x2="21" y2="6"></line>
+                        <line x1="3" y1="18" x2="21" y2="18"></line>
+                    </svg>
+                </button>
+                <div class="brand-logo-icon" aria-label="STRA AI Logo">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+                        <polyline points="2 17 12 22 22 17"></polyline>
+                        <polyline points="2 12 12 17 22 12"></polyline>
+                    </svg>
                 </div>
-                <h1 class="brand-title">STRA AI <span class="version-tag">v1.0 Phase 1A</span></h1>
+                <div class="brand-text-container">
+                    <h1 class="brand-title">STRA AI <span class="version-tag">v2.0 OPERATIONAL</span></h1>
+                    <p class="brand-subtitle">DEFENSE & CYBER INTELLIGENCE CORE</p>
+                </div>
             </div>
 
             <div class="status-zone">
-                <div class="status-indicator-pill" id="system-status-pill">
-                    <span class="indicator-dot online"></span>
+                <div class="telemetry-item hidden-mobile" aria-label="Knowledge base statistics">
+                    <span class="telemetry-label">INGESTED KNOWLEDGE</span>
+                    <span class="telemetry-value" id="header-kb-count">-- DOCS</span>
+                </div>
+                <div class="telemetry-divider hidden-mobile" aria-hidden="true"></div>
+                <div class="status-indicator-pill online" id="system-status-pill" role="status" aria-live="polite">
+                    <span class="indicator-dot online" aria-hidden="true"></span>
                     <span id="status-text">SYSTEM ONLINE // SECURE</span>
                 </div>
-                <div class="hud-time-display" id="hud-clock">00:00:00 UTC</div>
+                <div class="telemetry-divider" aria-hidden="true"></div>
+                <div class="hud-time-display" id="hud-clock" aria-label="Current UTC time">00:00:00 UTC</div>
             </div>
         </header>
 
@@ -48,133 +78,267 @@
         <div class="dashboard-body">
 
             <!-- SIDEBAR: CONTROLS & INTEL STREAMS -->
-            <aside class="tactical-sidebar" id="sidebar-panel">
-                
+            <aside class="tactical-sidebar" id="sidebar-panel" role="complementary"
+                aria-label="Control panel and configuration">
+
+                <!-- Action Controls -->
                 <div class="sidebar-section">
-                    <h2 class="sidebar-label">OPERATIONAL CONTROLS</h2>
-                    
-                    <button class="tactical-btn primary-btn" id="btn-new-session">
-                        <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M12 5v14M5 12h14"/>
+                    <button class="tactical-btn primary-btn" id="btn-new-session" type="button"
+                        title="Start a clean tactical analysis thread">
+                        <svg class="btn-icon" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" aria-hidden="true">
+                            <line x1="12" y1="5" x2="12" y2="19"></line>
+                            <line x1="5" y1="12" x2="19" y2="12"></line>
                         </svg>
                         <span>NEW INTEL SESSION</span>
                     </button>
                 </div>
 
+                <!-- Engine & Layer Configuration -->
                 <div class="sidebar-section">
-                    <h2 class="sidebar-label">MODEL CONFIGURATION</h2>
+                    <h2 class="sidebar-label">
+                        <svg class="label-icon" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" aria-hidden="true">
+                            <circle cx="12" cy="12" r="3"></circle>
+                            <path
+                                d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z">
+                            </path>
+                        </svg>
+                        ENGINE & RETRIEVAL CONFIG
+                    </h2>
+
                     <div class="config-group">
                         <label for="select-model" class="field-label">TARGET AI ENGINE</label>
-                        <select id="select-model" class="tactical-select">
-                            <option value="gpt-4.1-nano-2025-04-14" selected>GPT-4.1 Nano (Strategic Fast)</option>
-                            <option value="gpt-4o">GPT-4o (Full Intel Core)</option>
-                            <option value="gpt-4o-mini">GPT-4o Mini (Tactical Edge)</option>
-                            <option value="llama3.1:latest">Llama 3.1 (Local Ollama)</option>
-                        </select>
+                        <div class="select-wrapper">
+                            <select id="select-model" class="tactical-select" aria-label="Select AI model">
+                                <option value="gpt-4.1-nano-2025-04-14" selected>GPT-4.1 Nano (Strategic Fast)</option>
+                                <option value="gpt-4o">GPT-4o (Full Intelligence Core)</option>
+                                <option value="gpt-4o-mini">GPT-4o Mini (Tactical Edge)</option>
+                                <option value="llama3.1:latest">Llama 3.1 (Local Ollama Engine)</option>
+                            </select>
+                            <svg class="select-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                                stroke="currentColor" stroke-width="2" aria-hidden="true">
+                                <polyline points="6 9 12 15 18 9"></polyline>
+                            </svg>
+                        </div>
                     </div>
 
                     <div class="config-group toggle-group">
                         <div class="toggle-info">
-                            <span class="field-label">RAG RETRIEVAL LAYER</span>
-                            <span class="field-subtext">Curated Defense/Cyber DB</span>
+                            <span class="field-label">RAG KNOWLEDGE RETRIEVAL</span>
+                            <span class="field-subtext">Ingested Defense & Cyber Intel Base</span>
                         </div>
-                        <label class="tactical-switch">
-                            <input type="checkbox" id="toggle-rag" checked>
-                            <span class="slider"></span>
+                        <label class="tactical-switch" title="Toggle proprietary RAG knowledge retrieval">
+                            <input type="checkbox" id="toggle-rag" checked aria-describedby="rag-desc">
+                            <span class="slider" aria-hidden="true"></span>
                         </label>
                     </div>
 
                     <div class="config-group toggle-group">
                         <div class="toggle-info">
-                            <span class="field-label">WEB SEARCH LAYER</span>
-                            <span class="field-subtext">Live Internet Intelligence</span>
+                            <span class="field-label">LIVE WEB INTEL LAYER</span>
+                            <span class="field-subtext">Real-time Internet Intelligence</span>
                         </div>
-                        <label class="tactical-switch">
-                            <input type="checkbox" id="toggle-web-search" checked>
-                            <span class="slider web-slider"></span>
+                        <label class="tactical-switch" title="Toggle DuckDuckGo internet web search layer">
+                            <input type="checkbox" id="toggle-web-search" checked aria-describedby="web-desc">
+                            <span class="slider web-slider" aria-hidden="true"></span>
                         </label>
                     </div>
                 </div>
 
+                <!-- Tactical Presets -->
                 <div class="sidebar-section">
-                    <h2 class="sidebar-label">TACTICAL PROMPT MODULES</h2>
+                    <h2 class="sidebar-label">
+                        <svg class="label-icon" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" aria-hidden="true">
+                            <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+                        </svg>
+                        TACTICAL PROMPT MODULES
+                    </h2>
                     <div class="prompt-chips">
-                        <button class="chip-btn" data-prompt="Perform a MITRE ATT&CK TTP analysis on initial access and lateral movement tactics for ransomware operations.">
-                            🛡️ Cyber Threat Analysis
+                        <button class="chip-btn"
+                            data-prompt="Perform a MITRE ATT&CK TTP analysis on initial access and lateral movement tactics for ransomware operations."
+                            type="button">
+                            <span class="chip-badge cyber">CYBER</span>
+                            <span class="chip-text">MITRE ATT&CK Ransomware TTPs</span>
                         </button>
-                        <button class="chip-btn" data-prompt="Detail the OSINT verification matrix for authenticating geospatial imagery and digital footprinting.">
-                            🛰️ OSINT Recon Workflow
+                        <button class="chip-btn"
+                            data-prompt="Detail the OSINT verification matrix for authenticating geospatial imagery and digital footprinting."
+                            type="button">
+                            <span class="chip-badge osint">OSINT</span>
+                            <span class="chip-text">OSINT Imagery Verification Matrix</span>
                         </button>
-                        <button class="chip-btn" data-prompt="Summarize CISA critical vulnerability handling protocols and Zero Trust architecture requirements.">
-                            ⚡ CISA & Zero Trust Protocol
+                        <button class="chip-btn"
+                            data-prompt="Summarize CISA critical vulnerability handling protocols and Zero Trust architecture requirements."
+                            type="button">
+                            <span class="chip-badge cisa">CISA</span>
+                            <span class="chip-text">CISA & Zero Trust Protocol</span>
                         </button>
-                        <button class="chip-btn" data-prompt="Provide a technical summary of STANAG 4586 and Link 16 tactical data link communications.">
-                            📡 Tactical Defense Standards
+                        <button class="chip-btn"
+                            data-prompt="Provide a technical summary of STANAG 4586 and Link 16 tactical data link communications."
+                            type="button">
+                            <span class="chip-badge defense">DEFENSE</span>
+                            <span class="chip-text">STANAG 4586 & Link 16 Standard</span>
                         </button>
                     </div>
                 </div>
 
+                <!-- Knowledge Sources Container -->
                 <div class="sidebar-section kb-sources-section">
-                    <h2 class="sidebar-label">KNOWLEDGE BASE SOURCES (<span id="kb-count">4</span>)</h2>
-                    <div class="kb-source-list" id="kb-source-container">
-                        <div class="source-item">
-                            <span class="source-tag">CYBER</span>
+                    <div class="sidebar-section-header">
+                        <h2 class="sidebar-label">
+                            <svg class="label-icon" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                                stroke="currentColor" stroke-width="2" aria-hidden="true">
+                                <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                                <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+                            </svg>
+                            KNOWLEDGE BASE SOURCES
+                        </h2>
+                        <span class="kb-badge-count" id="kb-count" aria-label="4 knowledge sources">4</span>
+                    </div>
+
+                    <div class="kb-source-list" id="kb-source-container" role="list"
+                        aria-label="Knowledge base sources">
+                        <div class="source-item" role="listitem">
+                            <span class="source-tag cyber">CYBER</span>
                             <span class="source-name">MITRE ATT&CK TTP Matrix</span>
                         </div>
-                        <div class="source-item">
-                            <span class="source-tag">CISA</span>
+                        <div class="source-item" role="listitem">
+                            <span class="source-tag cisa">CISA</span>
                             <span class="source-name">CISA Vulnerability Advisories</span>
                         </div>
-                        <div class="source-item">
-                            <span class="source-tag">OSINT</span>
+                        <div class="source-item" role="listitem">
+                            <span class="source-tag osint">OSINT</span>
                             <span class="source-name">OSINT Collection Workflow</span>
                         </div>
-                        <div class="source-item">
-                            <span class="source-tag">DEFENSE</span>
+                        <div class="source-item" role="listitem">
+                            <span class="source-tag defense">DEFENSE</span>
                             <span class="source-name">Defense Tech & Tactical Links</span>
                         </div>
                     </div>
                 </div>
 
+                <!-- Security Classification Footer -->
                 <div class="sidebar-footer">
                     <div class="security-classification-tag">
-                        [ UNCLASSIFIED // STRA-INTEL ]
+                        <svg class="sec-icon" width="13" height="13" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" aria-hidden="true">
+                            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                            <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                        </svg>
+                        <span>UNCLASSIFIED // STRA-INTEL CORE</span>
                     </div>
                 </div>
 
             </aside>
 
             <!-- MAIN CHAT & RESPONSE STAGE -->
-            <main class="tactical-stage" id="chat-stage">
-                
+            <main class="tactical-stage" id="chat-stage" role="main" aria-label="Chat interface">
+
                 <!-- MESSAGES STREAM CONTAINER -->
-                <div class="chat-thread" id="chat-thread">
-                    
-                    <!-- INITIAL WELCOME BANNER -->
+                <div class="chat-thread" id="chat-thread" aria-live="polite" aria-atomic="false">
+
+                    <!-- INITIAL WELCOME DASHBOARD -->
                     <div class="welcome-card" id="welcome-card">
-                        <div class="card-hud-header">
-                            <span class="card-icon">⚡</span>
-                            <h3>STRA AI TACTICAL INTELLIGENCE CORE INITIALIZED</h3>
+                        <div class="welcome-hero">
+                            <div class="hero-icon-glow" aria-hidden="true">
+                                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2">
+                                    <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+                                    <polyline points="2 17 12 22 22 17"></polyline>
+                                    <polyline points="2 12 12 17 22 12"></polyline>
+                                </svg>
+                            </div>
+                            <div class="hero-content">
+                                <div class="hero-badge">OPERATIONAL SYSTEM INITIALIZED</div>
+                                <h2 class="hero-title">STRA AI Tactical Intelligence Platform</h2>
+                                <p class="hero-description">
+                                    Next-generation defense & threat intelligence operating core with OpenAI streaming engine,
+                                    proprietary military/cyber guardrails, localized RAG knowledge retrieval, and live internet web threat telemetry.
+                                </p>
+                            </div>
                         </div>
-                        <p class="welcome-text">
-                            Welcome, Analyst. Stra AI is online with OpenAI streaming integration, proprietary prompt guardrails, curated defense & cyber threat RAG retrieval, and <strong>live web search intelligence</strong>.
-                        </p>
+
                         <div class="welcome-grid">
                             <div class="welcome-feature">
-                                <span class="feature-title">🔒 Security Controls</span>
-                                <span class="feature-desc">Active rate limiting & structured audit logging.</span>
+                                <div class="feature-header">
+                                    <div class="feature-icon sec" aria-hidden="true">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+                                            stroke="currentColor" stroke-width="2">
+                                            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                                        </svg>
+                                    </div>
+                                    <span class="feature-title">Security & Audit</span>
+                                </div>
+                                <p class="feature-desc">Active rate-limiting, token auth controls, and structured security logging.</p>
                             </div>
+
                             <div class="welcome-feature">
-                                <span class="feature-title">📚 Knowledge Retrieval</span>
-                                <span class="feature-desc">MITRE ATT&CK, CISA Advisories, OSINT, and Defense Standards.</span>
+                                <div class="feature-header">
+                                    <div class="feature-icon rag" aria-hidden="true">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+                                            stroke="currentColor" stroke-width="2">
+                                            <ellipse cx="12" cy="5" rx="9" ry="3"></ellipse>
+                                            <path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"></path>
+                                            <path d="M21 19c0 1.66-4 3-9 3s-9-1.34-9-3"></path>
+                                        </svg>
+                                    </div>
+                                    <span class="feature-title">Ingested RAG Base</span>
+                                </div>
+                                <p class="feature-desc">Curated threat matrices including MITRE ATT&CK, CISA Advisories & STANAG Standards.</p>
                             </div>
+
                             <div class="welcome-feature">
-                                <span class="feature-title">🌐 Live Web Search</span>
-                                <span class="feature-desc">Real-time DuckDuckGo internet intelligence for current events & threats.</span>
+                                <div class="feature-header">
+                                    <div class="feature-icon web" aria-hidden="true">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+                                            stroke="currentColor" stroke-width="2">
+                                            <circle cx="12" cy="12" r="10"></circle>
+                                            <line x1="2" y1="12" x2="22" y2="12"></line>
+                                            <path
+                                                d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z">
+                                            </path>
+                                        </svg>
+                                    </div>
+                                    <span class="feature-title">Live Internet Recon</span>
+                                </div>
+                                <p class="feature-desc">Real-time web search retrieval for breaking threats & critical vulnerabilities.</p>
                             </div>
+
                             <div class="welcome-feature">
-                                <span class="feature-title">🏷️ Source Citations</span>
-                                <span class="feature-desc">Automatic inline context references & citation cards.</span>
+                                <div class="feature-header">
+                                    <div class="feature-icon cit" aria-hidden="true">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+                                            stroke="currentColor" stroke-width="2">
+                                            <polygon
+                                                points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2">
+                                            </polygon>
+                                        </svg>
+                                    </div>
+                                    <span class="feature-title">Source Citations</span>
+                                </div>
+                                <p class="feature-desc">Traceable inline context citations with confidence scores & document refs.</p>
+                            </div>
+                        </div>
+
+                        <div class="quick-launch-container">
+                            <span class="launch-label">QUICK LAUNCH TACTICAL QUERY:</span>
+                            <div class="launch-pills">
+                                <button class="launch-pill-btn"
+                                    data-prompt="Analyze recent ransomware campaigns targeting critical infrastructure and outline MITRE ATT&CK mitigations."
+                                    type="button">
+                                    <span class="pill-icon">⚡</span> Ransomware ATT&CK Matrix
+                                </button>
+                                <button class="launch-pill-btn"
+                                    data-prompt="Draft a zero-trust network access (ZTNA) policy framework adhering to CISA guidance."
+                                    type="button">
+                                    <span class="pill-icon">🔒</span> Zero Trust Policy Framework
+                                </button>
+                                <button class="launch-pill-btn"
+                                    data-prompt="Explain STANAG 4586 architecture for Unmanned Aircraft System (UAS) control interfaces."
+                                    type="button">
+                                    <span class="pill-icon">🛰️</span> STANAG 4586 UAS Protocol
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -182,19 +346,46 @@
                 </div>
 
                 <!-- RAG CITATIONS PANEL / DRAWER -->
-                <div class="citations-bar hidden" id="citations-bar">
+                <div class="citations-bar hidden" id="citations-bar" aria-label="RAG intelligence sources">
                     <div class="citations-header">
-                        <span class="citations-title">🔍 RETRIEVED INTELLIGENCE SOURCES</span>
-                        <button class="close-citations" id="btn-close-citations">&times;</button>
+                        <div class="citations-title-group">
+                            <svg class="cit-icon" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                                stroke="currentColor" stroke-width="2" aria-hidden="true">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                <polyline points="14 2 14 8 20 8"></polyline>
+                                <line x1="16" y1="13" x2="8" y2="13"></line>
+                                <line x1="16" y1="17" x2="8" y2="17"></line>
+                                <polyline points="10 9 9 9 8 9"></polyline>
+                            </svg>
+                            <span class="citations-title">RETRIEVED RAG INTELLIGENCE SOURCES</span>
+                        </div>
+                        <button class="close-citations" id="btn-close-citations" type="button"
+                            title="Close citations drawer" aria-label="Close RAG citations">
+                            &times;
+                        </button>
                     </div>
                     <div class="citations-list" id="citations-list"></div>
                 </div>
 
                 <!-- WEB CITATIONS PANEL / DRAWER -->
-                <div class="citations-bar web-citations-bar hidden" id="web-citations-bar">
+                <div class="citations-bar web-citations-bar hidden" id="web-citations-bar"
+                    aria-label="Live internet recon sources">
                     <div class="citations-header">
-                        <span class="citations-title">🌐 LIVE WEB INTELLIGENCE SOURCES</span>
-                        <button class="close-citations" id="btn-close-web-citations">&times;</button>
+                        <div class="citations-title-group">
+                            <svg class="cit-icon web-icon" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                                stroke="currentColor" stroke-width="2" aria-hidden="true">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <line x1="2" y1="12" x2="22" y2="12"></line>
+                                <path
+                                    d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z">
+                                </path>
+                            </svg>
+                            <span class="citations-title web-title">LIVE INTERNET RECON SOURCES</span>
+                        </div>
+                        <button class="close-citations" id="btn-close-web-citations" type="button"
+                            title="Close web citations drawer" aria-label="Close web citations">
+                            &times;
+                        </button>
                     </div>
                     <div class="citations-list" id="web-citations-list"></div>
                 </div>
@@ -202,29 +393,42 @@
                 <!-- INPUT & CONTROL BAR -->
                 <div class="input-stage">
                     <div class="input-panel-wrapper">
-                        
+
                         <div class="input-header-status">
-                            <span class="channel-text">SECURE CHANNEL // PROMPT ENGINE v1</span>
-                            <span class="typing-status hidden" id="typing-indicator">
-                                <span class="pulse-dot"></span> STRA AI ANALYZING INTEL STREAM...
-                            </span>
+                            <div class="channel-indicator">
+                                <span class="pulse-dot-small" aria-hidden="true"></span>
+                                <span class="channel-text">SECURE CHANNEL // PROMPT ENGINE v2</span>
+                            </div>
+                            <div class="typing-status hidden" id="typing-indicator" aria-live="polite">
+                                <span class="pulse-dot" aria-hidden="true"></span>
+                                <span class="typing-text">STRA AI PROCESSING INTEL STREAM...</span>
+                            </div>
                         </div>
 
-                        <form id="chat-form" class="chat-form">
-                            <textarea 
-                                id="user-input" 
-                                class="tactical-textarea" 
-                                placeholder="Enter tactical query, threat intelligence request, or OSINT prompt..." 
-                                rows="2"
-                                required></textarea>
-                            
+                        <form id="chat-form" class="chat-form" aria-label="Chat message form">
+                            <div class="textarea-container">
+                                <textarea id="user-input" class="tactical-textarea"
+                                    placeholder="Enter tactical query, threat intelligence request, or OSINT prompt..."
+                                    rows="2" required aria-label="Message input"></textarea>
+                                <div class="textarea-footer-tips">
+                                    <span class="shortcut-tip">Press <kbd>Ctrl</kbd> + <kbd>Enter</kbd> to execute</span>
+                                </div>
+                            </div>
+
                             <div class="input-action-buttons">
-                                <button type="button" id="btn-stop" class="tactical-btn stop-btn hidden">
+                                <button type="button" id="btn-stop" class="tactical-btn stop-btn hidden"
+                                    title="Abort active stream generation" aria-label="Stop generation">
+                                    <svg class="btn-icon" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                                        stroke="currentColor" stroke-width="2" aria-hidden="true">
+                                        <rect x="6" y="6" width="12" height="12"></rect>
+                                    </svg>
                                     <span>ABORT</span>
                                 </button>
-                                <button type="submit" id="btn-send" class="tactical-btn send-btn">
+                                <button type="submit" id="btn-send" class="tactical-btn send-btn"
+                                    title="Send query to STRA AI engine" aria-label="Send message">
                                     <span>EXECUTE</span>
-                                    <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <svg class="btn-icon" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                                        stroke="currentColor" stroke-width="2" aria-hidden="true">
                                         <line x1="22" y1="2" x2="11" y2="13"></line>
                                         <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
                                     </svg>
@@ -241,7 +445,8 @@
 
     </div>
 
-    <!-- Scripts -->
+    <!-- Application Scripts -->
     <script src="/static/js/app.js"></script>
 </body>
+
 </html>
