@@ -115,7 +115,6 @@
         sidebarPanel: document.getElementById('sidebar-panel'),
         selectModel: document.getElementById('select-model'),
         toggleRag: document.getElementById('toggle-rag'),
-        toggleWebSearch: document.getElementById('toggle-web-search'),
         typingIndicator: document.getElementById('typing-indicator'),
         hudClock: document.getElementById('hud-clock'),
         headerKbCount: document.getElementById('header-kb-count'),
@@ -734,6 +733,7 @@
 
     function startStreamingState() {
         state.isStreaming = true;
+        state.activeAbortController = new AbortController();
         updateStreamingUI(true);
         playTone(700, 'sine', 0.05, 0.03);
     }
@@ -785,11 +785,10 @@
         const payload = {
             messages: state.conversationHistory,
             enable_rag: DOM.toggleRag ? DOM.toggleRag.checked : true,
-            enable_web_search: DOM.toggleWebSearch ? DOM.toggleWebSearch.checked : true,
+            enable_web_search: true,
             model: DOM.selectModel ? DOM.selectModel.value : 'gpt-4.1-nano-2025-04-14'
         };
 
-        state.activeAbortController = new AbortController();
         let fullAssistantText = '';
 
         try {
@@ -797,7 +796,7 @@
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload),
-                signal: state.activeAbortController.signal
+                signal: state.activeAbortController ? state.activeAbortController.signal : undefined
             });
 
             if (!response.ok) {
@@ -848,7 +847,22 @@
             saveActiveSession();
 
         } catch (err) {
-            if (err.name !== 'AbortError') {
+            const isUserAborted = (state.activeAbortController && state.activeAbortController.signal.aborted) ||
+                err.name === 'AbortError' ||
+                (err.message && err.message.toLowerCase().includes('abort'));
+
+            if (isUserAborted) {
+                if (fullAssistantText.trim()) {
+                    const stoppedNote = fullAssistantText + '\n\n*🛑 [Generation stopped by analyst]*';
+                    renderMarkdown(bubbleElem, stoppedNote);
+                    state.conversationHistory.push({ role: 'assistant', content: fullAssistantText });
+                    attachAssistantToolbar(wrapper, fullAssistantText);
+                    saveActiveSession();
+                } else {
+                    renderMarkdown(bubbleElem, '*🛑 [Generation stopped by analyst]*');
+                    attachAssistantToolbar(wrapper, '');
+                }
+            } else {
                 handleStreamError(err, bubbleElem);
             }
         } finally {
@@ -1313,11 +1327,17 @@
             DOM.btnStop.addEventListener('click', () => {
                 if (state.activeAbortController) {
                     state.activeAbortController.abort();
-                    finishStreamingState();
                     announceToScreenReader('Generation stopped');
                 }
             });
         }
+
+        window.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && state.isStreaming && state.activeAbortController) {
+                state.activeAbortController.abort();
+                announceToScreenReader('Generation stopped');
+            }
+        });
 
         if (DOM.btnPreviousSessions) {
             DOM.btnPreviousSessions.addEventListener('click', openSessionsModal);

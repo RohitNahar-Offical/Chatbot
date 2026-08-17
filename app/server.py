@@ -212,7 +212,10 @@ async def chat_stream_endpoint(payload: ChatStreamRequest, request: Request):
     # 2. Web Search Step
     web_context = ""
     web_citations = []
-    if payload.enable_web_search and query_needs_web_search(last_user_msg):
+    is_simple_greeting = len(last_user_msg.strip().split()) <= 2 and last_user_msg.strip().lower().strip("!.,?") in ["hi", "hello", "hey", "thanks", "thank you", "bye", "good morning", "good evening"]
+    should_search_web = payload.enable_web_search and (not is_simple_greeting or query_needs_web_search(last_user_msg))
+
+    if should_search_web:
         web_results = await web_search_engine.search(last_user_msg)
         if web_results:
             web_context = web_search_engine.format_web_context(web_results)
@@ -263,6 +266,9 @@ async def chat_stream_endpoint(payload: ChatStreamRequest, request: Request):
             )
 
             for chunk in response_stream:
+                if await request.is_disconnected():
+                    print(f"[CHAT STREAM] Client {client_ip} disconnected. Aborting LLM stream loop.")
+                    break
                 if chunk.choices and chunk.choices[0].delta.content:
                     token = chunk.choices[0].delta.content
                     yield f"event: delta\ndata: {json.dumps({'content': token})}\n\n"
