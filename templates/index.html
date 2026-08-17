@@ -108,6 +108,14 @@
                         <span>NEW INTEL SESSION</span>
                     </button>
 
+                    <button class="tactical-btn secondary-btn full-width-btn" id="btn-previous-sessions" type="button" title="View & load previous intel sessions">
+                        <svg class="btn-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <polyline points="12 6 12 12 16 14"></polyline>
+                        </svg>
+                        <span>PREVIOUS INTEL SESSIONS</span>
+                    </button>
+
                     <div class="sidebar-row-buttons">
                         <button class="tactical-btn secondary-btn" id="btn-export-chat" type="button" title="Export current thread to Markdown file">
                             <svg class="btn-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -144,7 +152,8 @@
                         <label for="select-model" class="field-label">TARGET AI ENGINE</label>
                         <div class="select-wrapper">
                             <select id="select-model" class="tactical-select" aria-label="Select AI model">
-                                <option value="gpt-4.1-nano-2025-04-14" selected>⚡ GPT-4.1 Nano (Strategic Fast)</option>
+                                <option value="unsloth_Qwen3.5-2B_1786960895:latest" selected>🦥 Unsloth Qwen 3.5 2B (Local Ollama Core)</option>
+                                <option value="gpt-4.1-nano-2025-04-14">⚡ GPT-4.1 Nano (Strategic Fast)</option>
                                 <option value="gpt-4o">🧠 GPT-4o (Full Intelligence Core)</option>
                                 <option value="gpt-4o-mini">🛡️ GPT-4o Mini (Tactical Edge)</option>
                                 <option value="llama3.1:latest">💻 Llama 3.1 (Local Ollama Engine)</option>
@@ -474,6 +483,46 @@
         </div>
 
     </div>
+
+    <!-- PREVIOUS INTEL SESSIONS MODAL -->
+    <div class="tactical-modal-backdrop hidden" id="sessions-modal" role="dialog" aria-modal="true" aria-labelledby="sessions-modal-title">
+        <div class="tactical-modal-container">
+            <div class="tactical-modal-header">
+                <div class="modal-title-zone">
+                    <svg class="modal-header-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <polyline points="12 6 12 12 16 14"></polyline>
+                    </svg>
+                    <h2 class="modal-title" id="sessions-modal-title">PREVIOUS INTEL SESSIONS</h2>
+                </div>
+                <button class="modal-close-btn" id="btn-close-sessions-modal" type="button" aria-label="Close modal">&times;</button>
+            </div>
+            <div class="tactical-modal-body">
+                <div class="sessions-filter-bar">
+                    <div class="search-input-wrapper">
+                        <svg class="search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="11" cy="11" r="8"></circle>
+                            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                        </svg>
+                        <input type="text" id="session-search-input" class="tactical-input" placeholder="Search sessions by prompt or title..." aria-label="Search previous sessions">
+                    </div>
+                    <button class="tactical-btn secondary-btn danger-hover" id="btn-clear-all-sessions" type="button" title="Clear all saved session history">
+                        <svg class="btn-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="3 6 5 6 21 6"></polyline>
+                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                        </svg>
+                        <span>CLEAR ALL HISTORY</span>
+                    </button>
+                </div>
+                <div class="sessions-list-container" id="sessions-list-container">
+                    <!-- Session cards dynamically rendered here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- TACTICAL HUD TOAST NOTIFICATION CONTAINER -->
+    <div class="tactical-toast-container" id="tactical-toast-container" aria-live="polite"></div>
 
     <!-- Application Scripts -->
     <script src="/static/js/app.js"></script>

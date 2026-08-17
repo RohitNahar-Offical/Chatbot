@@ -50,22 +50,34 @@ rag_engine = RAGEngine(knowledge_dir=KNOWLEDGE_DIR)
 security_control = SecurityControl()
 web_search_engine = WebSearchEngine()
 
-# LLM Client Lazy Initializer (supports local Ollama & OpenAI)
-def get_llm_client(model: str) -> OpenAI:
-    if model == "llama3.1:latest":
-        return OpenAI(
-            base_url=os.getenv("OLLAMA_BASE_URL", "http://localhost:11434/v1"),
-            api_key="ollama"  # Required by client but ignored by Ollama
-        )
-    
-    api_key = os.getenv("open_ai_key") or os.getenv("OPENAI_API_KEY")
-    if not api_key:
-        raise HTTPException(
-            status_code=500,
-            detail="OpenAI API key missing. Please set OPENAI_API_KEY in .env file."
-        )
-    return OpenAI(api_key=api_key)
+# LLM Client Lazy Initializer (supports local Ollama / Unsloth fine-tuned models & OpenAI)
+def is_openai_model(model: str) -> bool:
+    openai_prefixes = ("gpt-", "o1", "o3", "text-embedding", "dall-e")
+    return model.lower().startswith(openai_prefixes)
 
+def get_llm_client(model: str) -> OpenAI:
+    if is_openai_model(model):
+        api_key = os.getenv("open_ai_key") or os.getenv("OPENAI_API_KEY")
+        if not api_key:
+            raise HTTPException(
+                status_code=500,
+                detail="OpenAI API key missing. Please set OPENAI_API_KEY in .env file."
+            )
+        return OpenAI(api_key=api_key)
+    
+    # Default local LLM server (Ollama)
+    base_url = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434/v1")
+    api_key = os.getenv("OLLAMA_API_KEY", "ollama")
+
+    # Override for direct Unsloth Studio HTTP API if UNSLOTH_BASE_URL is explicitly set and model isn't Ollama tagged
+    if "unsloth" in model.lower() and not model.endswith(":latest") and os.getenv("UNSLOTH_BASE_URL"):
+        base_url = os.getenv("UNSLOTH_BASE_URL")
+        api_key = os.getenv("UNSLOTH_API_KEY", "ollama")
+
+    return OpenAI(
+        base_url=base_url,
+        api_key=api_key
+    )
 
 
 def format_llm_exception(e: Exception, model: str) -> str:
@@ -75,16 +87,25 @@ def format_llm_exception(e: Exception, model: str) -> str:
     if isinstance(e, HTTPException):
         return f"Configuration Error: {e.detail}"
 
-    # Handle OpenAI / Ollama API connection errors
+    # Handle API connection errors
     if isinstance(e, (openai.APIConnectionError,)) or "Connection error" in err_str or "ConnectError" in err_str or "Connection refused" in err_str or "failed to connect" in err_str.lower():
-        if model == "llama3.1:latest":
+        if "unsloth" in model.lower():
+            unsloth_url = os.getenv("UNSLOTH_BASE_URL", f"http://127.0.0.1:8888/p/{model}/v1")
+            return (
+                f"Network Exception: Unable to connect to local Unsloth Studio server at `{unsloth_url}`.\n\n"
+                f"**Troubleshooting Steps**:\n"
+                f"1. Ensure Unsloth Studio desktop app is open and serving `{model}`.\n"
+                f"2. Verify Unsloth Studio port (8888) and authentication key in your `.env` file.\n"
+                f"3. Check that the model is actively loaded in Unsloth Studio."
+            )
+        elif not is_openai_model(model):
             ollama_url = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434/v1")
             return (
-                f"Network Exception: Unable to connect to local Ollama server at {ollama_url}.\n\n"
+                f"Network Exception: Unable to connect to local LLM server at {ollama_url}.\n\n"
                 f"**Troubleshooting Steps**:\n"
-                f"1. Ensure Ollama service is running (`ollama serve` or launch Ollama desktop app).\n"
-                f"2. Verify model `{model}` is installed (`ollama pull llama3.1`).\n"
-                f"3. Alternatively, switch to an OpenAI model (e.g., GPT-4.1 Nano) in Model Configuration."
+                f"1. Ensure Ollama/local LLM engine is running (`ollama serve` or open Ollama Desktop).\n"
+                f"2. Verify model `{model}` is registered in Ollama (`ollama list` or `ollama create {model} -f Modelfile`).\n"
+                f"3. Alternatively, switch to an OpenAI model in Model Configuration."
             )
         else:
             return (

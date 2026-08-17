@@ -30,6 +30,10 @@
 
     const state = {
         conversationHistory: [],
+        currentSessionId: null,
+        savedSessions: [],
+        lastCitations: [],
+        lastWebCitations: [],
         isStreaming: false,
         activeAbortController: null,
         systemStatus: 'online',
@@ -103,6 +107,7 @@
         btnSend: document.getElementById('btn-send'),
         btnStop: document.getElementById('btn-stop'),
         btnNewSession: document.getElementById('btn-new-session'),
+        btnPreviousSessions: document.getElementById('btn-previous-sessions'),
         btnExportChat: document.getElementById('btn-export-chat'),
         btnClearChat: document.getElementById('btn-clear-chat'),
         btnAudioToggle: document.getElementById('btn-audio-toggle'),
@@ -128,7 +133,13 @@
         tabContentRag: document.getElementById('tab-content-rag'),
         tabContentWeb: document.getElementById('tab-content-web'),
         ragTabBadge: document.getElementById('rag-tab-badge'),
-        webTabBadge: document.getElementById('web-tab-badge')
+        webTabBadge: document.getElementById('web-tab-badge'),
+        sessionsModal: document.getElementById('sessions-modal'),
+        btnCloseSessionsModal: document.getElementById('btn-close-sessions-modal'),
+        sessionSearchInput: document.getElementById('session-search-input'),
+        btnClearAllSessions: document.getElementById('btn-clear-all-sessions'),
+        sessionsListContainer: document.getElementById('sessions-list-container'),
+        toastContainer: document.getElementById('tactical-toast-container')
     };
 
     // ========================================
@@ -173,6 +184,32 @@
                 document.body.removeChild(announcement);
             }
         }, 1000);
+    }
+
+    function showToast(message, type = 'info', duration = 3200) {
+        const container = DOM.toastContainer || document.getElementById('tactical-toast-container');
+        if (!container) return;
+
+        const toast = document.createElement('div');
+        toast.className = `tactical-toast toast-${type}`;
+
+        let icon = 'ℹ️';
+        if (type === 'success') icon = '✅';
+        if (type === 'warning') icon = '⚠️';
+        if (type === 'error') icon = '❌';
+
+        toast.innerHTML = `<span>${icon}</span> <span>${escapeHtml(message)}</span>`;
+        container.appendChild(toast);
+
+        setTimeout(() => {
+            toast.style.opacity = '0';
+            toast.style.transform = 'translateX(40px)';
+            setTimeout(() => {
+                if (toast.parentNode) {
+                    toast.parentNode.removeChild(toast);
+                }
+            }, 300);
+        }, duration);
     }
 
     // ========================================
@@ -808,6 +845,7 @@
 
             state.conversationHistory.push({ role: 'assistant', content: fullAssistantText });
             attachAssistantToolbar(wrapper, fullAssistantText);
+            saveActiveSession();
 
         } catch (err) {
             if (err.name !== 'AbortError') {
@@ -834,6 +872,7 @@
             case 'citations':
                 try {
                     const citations = JSON.parse(eventData);
+                    state.lastCitations = citations;
                     renderCitationsDrawer(citations);
                     appendCitationBadge(ctx.wrapper, citations);
                 } catch (e) {
@@ -844,6 +883,7 @@
             case 'web_citations':
                 try {
                     const webCitations = JSON.parse(eventData);
+                    state.lastWebCitations = webCitations;
                     renderWebCitationsDrawer(webCitations);
                     appendWebCitationBadge(ctx.wrapper, webCitations);
                 } catch (e) {
@@ -882,6 +922,258 @@
     }
 
     // ========================================
+    // SESSION HISTORY MANAGER (LOCALSTORAGE)
+    // ========================================
+
+    const STORAGE_KEY_SESSIONS = 'stra_ai_intel_sessions';
+
+    function loadSavedSessionsFromStorage() {
+        try {
+            const raw = localStorage.getItem(STORAGE_KEY_SESSIONS);
+            state.savedSessions = raw ? JSON.parse(raw) : [];
+        } catch (e) {
+            console.warn('[STRA AI] Failed to load saved sessions:', e);
+            state.savedSessions = [];
+        }
+    }
+
+    function saveSessionsToStorage() {
+        try {
+            localStorage.setItem(STORAGE_KEY_SESSIONS, JSON.stringify(state.savedSessions));
+        } catch (e) {
+            console.warn('[STRA AI] Failed to persist saved sessions:', e);
+        }
+    }
+
+    function generateSessionId() {
+        return 'session_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7);
+    }
+
+    function getOrCreateCurrentSessionId() {
+        if (!state.currentSessionId) {
+            state.currentSessionId = generateSessionId();
+        }
+        return state.currentSessionId;
+    }
+
+    function autoGenerateSessionTitle(messages) {
+        const firstUserMsg = messages.find(m => m.role === 'user');
+        if (!firstUserMsg || !firstUserMsg.content) {
+            return 'Untitled Intel Session';
+        }
+        let clean = firstUserMsg.content.trim().replace(/\n/g, ' ');
+        if (clean.length > 40) {
+            clean = clean.substring(0, 40) + '...';
+        }
+        return clean;
+    }
+
+    function saveActiveSession() {
+        if (!state.conversationHistory || !state.conversationHistory.length) return;
+
+        const sessionId = getOrCreateCurrentSessionId();
+        const existingIdx = state.savedSessions.findIndex(s => s.id === sessionId);
+
+        const title = autoGenerateSessionTitle(state.conversationHistory);
+        const sessionData = {
+            id: sessionId,
+            title: title,
+            updatedAt: new Date().toISOString(),
+            messages: [...state.conversationHistory],
+            citations: state.lastCitations || [],
+            webCitations: state.lastWebCitations || []
+        };
+
+        if (existingIdx >= 0) {
+            state.savedSessions[existingIdx] = sessionData;
+        } else {
+            state.savedSessions.unshift(sessionData);
+        }
+
+        saveSessionsToStorage();
+    }
+
+    function openSessionsModal() {
+        playClickSound();
+        loadSavedSessionsFromStorage();
+        renderSessionsList();
+        if (DOM.sessionsModal) {
+            DOM.sessionsModal.classList.remove('hidden');
+        }
+    }
+
+    function closeSessionsModal() {
+        playClickSound();
+        if (DOM.sessionsModal) {
+            DOM.sessionsModal.classList.add('hidden');
+        }
+    }
+
+    function renderSessionsList(searchQuery = '') {
+        const container = DOM.sessionsListContainer || document.getElementById('sessions-list-container');
+        if (!container) return;
+
+        const query = searchQuery.toLowerCase().trim();
+        const filtered = state.savedSessions.filter(s => {
+            if (!query) return true;
+            if (s.title.toLowerCase().includes(query)) return true;
+            return s.messages.some(m => m.content.toLowerCase().includes(query));
+        });
+
+        if (!filtered.length) {
+            container.innerHTML = `
+                <div class="no-sessions-msg">
+                    ${query ? 'No previous sessions match your search query.' : 'No saved intel sessions found. Start a new session to record history.'}
+                </div>
+            `;
+            return;
+        }
+
+        container.innerHTML = filtered.map(s => {
+            const isActive = s.id === state.currentSessionId;
+            const dateStr = new Date(s.updatedAt).toLocaleString(undefined, {
+                month: 'short',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+            const exchangeCount = s.messages.length;
+
+            return `
+                <div class="session-card ${isActive ? 'active-session' : ''}">
+                    <div class="session-main-info">
+                        <div class="session-card-header">
+                            <span class="session-title" title="${escapeHtml(s.title)}">${escapeHtml(s.title)}</span>
+                            <span class="session-badge ${isActive ? 'active-badge' : ''}">
+                                ${isActive ? 'ACTIVE SESSION' : exchangeCount + ' EXCHANGES'}
+                            </span>
+                        </div>
+                        <div class="session-meta">
+                            <span>🕒 ${dateStr}</span>
+                            <span>ID: ${escapeHtml(s.id.substring(0, 16))}...</span>
+                        </div>
+                    </div>
+                    <div class="session-actions">
+                        <button class="session-action-btn load-btn" data-action="load" data-id="${s.id}" type="button" title="Load this session into chat">
+                            📥 LOAD
+                        </button>
+                        <button class="session-action-btn export-btn" data-action="export" data-id="${s.id}" type="button" title="Export report markdown">
+                            💾 EXPORT
+                        </button>
+                        <button class="session-action-btn delete-btn" data-action="delete" data-id="${s.id}" type="button" title="Delete session from history">
+                            🗑️
+                        </button>
+                    </div>
+                </div>
+            `;
+        }).join('');
+
+        container.querySelectorAll('.session-action-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const action = btn.getAttribute('data-action');
+                const id = btn.getAttribute('data-id');
+
+                if (action === 'load') {
+                    loadSessionById(id);
+                } else if (action === 'export') {
+                    exportSessionById(id);
+                } else if (action === 'delete') {
+                    deleteSessionById(id);
+                }
+            });
+        });
+    }
+
+    function loadSessionById(sessionId) {
+        if (state.conversationHistory.length) {
+            saveActiveSession();
+        }
+
+        const session = state.savedSessions.find(s => s.id === sessionId);
+        if (!session) return;
+
+        playClickSound();
+
+        state.currentSessionId = session.id;
+        state.conversationHistory = [...(session.messages || [])];
+        state.lastCitations = session.citations || [];
+        state.lastWebCitations = session.webCitations || [];
+        state.hasUserInteracted = true;
+
+        if (DOM.chatThread) {
+            DOM.chatThread.innerHTML = '';
+        }
+
+        let lastAssistantWrapper = null;
+        session.messages.forEach(msg => {
+            if (msg.role === 'user') {
+                appendUserMessageDOM(msg.content);
+            } else if (msg.role === 'assistant') {
+                const { wrapper, bubbleElem } = createAssistantBubbleDOM();
+                renderMarkdown(bubbleElem, msg.content);
+                attachAssistantToolbar(wrapper, msg.content);
+                lastAssistantWrapper = wrapper;
+            }
+        });
+
+        if (state.lastCitations.length) {
+            renderCitationsDrawer(state.lastCitations);
+            if (lastAssistantWrapper) {
+                appendCitationBadge(lastAssistantWrapper, state.lastCitations);
+            }
+        }
+        if (state.lastWebCitations.length) {
+            renderWebCitationsDrawer(state.lastWebCitations);
+            if (lastAssistantWrapper) {
+                appendWebCitationBadge(lastAssistantWrapper, state.lastWebCitations);
+            }
+        }
+
+        closeSessionsModal();
+        showToast(`Loaded intel session "${session.title}"`, 'success');
+        scrollToBottom(false);
+    }
+
+    function deleteSessionById(sessionId) {
+        playClickSound();
+        state.savedSessions = state.savedSessions.filter(s => s.id !== sessionId);
+        saveSessionsToStorage();
+
+        if (state.currentSessionId === sessionId) {
+            clearSession();
+        } else {
+            renderSessionsList(DOM.sessionSearchInput ? DOM.sessionSearchInput.value : '');
+        }
+
+        showToast('Session deleted from history', 'info');
+    }
+
+    function clearAllSavedSessions() {
+        if (!state.savedSessions.length) {
+            showToast('Session history is already empty', 'info');
+            return;
+        }
+
+        if (!confirm('Are you sure you want to delete ALL previous session history? This action cannot be undone.')) {
+            return;
+        }
+
+        playClickSound();
+        state.savedSessions = [];
+        saveSessionsToStorage();
+        clearSession();
+        renderSessionsList();
+        showToast('All session history cleared', 'warning');
+    }
+
+    function exportSessionById(sessionId) {
+        const session = state.savedSessions.find(s => s.id === sessionId);
+        if (!session) return;
+        exportChatHistoryData(session.messages, session.title, session.citations, session.webCitations);
+    }
+
+    // ========================================
     // EXPORT & CLEAR SESSION
     // ========================================
 
@@ -892,7 +1184,14 @@
             state.activeAbortController.abort();
         }
 
+        if (state.conversationHistory.length) {
+            saveActiveSession();
+        }
+
+        state.currentSessionId = generateSessionId();
         state.conversationHistory = [];
+        state.lastCitations = [];
+        state.lastWebCitations = [];
         state.hasUserInteracted = false;
 
         if (DOM.chatThread) {
@@ -910,23 +1209,64 @@
         }
 
         finishStreamingState();
-        announceToScreenReader('Session cleared, new session started');
+        showToast('New Intel Session initialized', 'info');
+        announceToScreenReader('New session initialized');
+    }
+
+    function exportChatHistoryData(messages, sessionTitle = null, citations = [], webCitations = []) {
+        if (!messages || !messages.length) {
+            showToast('No active messages in session to export.', 'warning');
+            return;
+        }
+
+        playClickSound();
+
+        const title = sessionTitle || autoGenerateSessionTitle(messages);
+        const timestamp = new Date().toISOString();
+
+        let mdContent = `# STRA AI — Tactical Intelligence Session Report\n`;
+        mdContent += `**Classification**: UNCLASSIFIED // STRA-INTEL CORE\n`;
+        mdContent += `**Session Title**: ${title}\n`;
+        mdContent += `**Export Date**: ${timestamp}\n`;
+        mdContent += `**Exchanges**: ${messages.length}\n`;
+        mdContent += `**Target AI Engine**: ${DOM.selectModel ? DOM.selectModel.value : 'Default'}\n\n`;
+        mdContent += `---\n\n`;
+
+        messages.forEach((msg, idx) => {
+            const roleName = msg.role === 'user' ? 'ANALYST // USER' : 'STRA AI // INTELLIGENCE CORE';
+            mdContent += `### [Exchange #${idx + 1}] ${roleName}\n\n`;
+            mdContent += `${msg.content}\n\n`;
+            mdContent += `---\n\n`;
+        });
+
+        if (citations && citations.length) {
+            mdContent += `### RAG Knowledge Base Citations\n\n`;
+            citations.forEach((c, i) => {
+                mdContent += `${i + 1}. **${c.title}** (${c.category}) — Section: *${c.section}* (Score: ${Math.round((c.score || 0.8) * 100)}%)\n`;
+            });
+            mdContent += `\n---\n\n`;
+        }
+
+        if (webCitations && webCitations.length) {
+            mdContent += `### Live Internet Recon Sources\n\n`;
+            webCitations.forEach((c, i) => {
+                mdContent += `${i + 1}. [${c.title}](${c.url}) — Source: ${c.source}\n`;
+            });
+            mdContent += `\n---\n\n`;
+        }
+
+        const filename = `STRA_AI_Intel_Report_${Date.now()}.md`;
+        downloadTextFile(mdContent, filename);
+        showToast(`Intel session report downloaded successfully!`, 'success');
     }
 
     function exportChatHistory() {
-        if (!state.conversationHistory.length) return;
-        playClickSound();
-
-        let mdContent = `# STRA AI — Tactical Intelligence Session Report\n`;
-        mdContent += `**Date**: ${new Date().toISOString()}\n`;
-        mdContent += `**Total Exchanges**: ${state.conversationHistory.length}\n\n---\n\n`;
-
-        state.conversationHistory.forEach((msg, idx) => {
-            const roleName = msg.role === 'user' ? 'ANALYST // USER' : 'STRA AI // INTELLIGENCE CORE';
-            mdContent += `### [${idx + 1}] ${roleName}\n\n${msg.content}\n\n---\n\n`;
-        });
-
-        downloadTextFile(mdContent, `STRA_AI_Session_Report_${Date.now()}.md`);
+        exportChatHistoryData(
+            state.conversationHistory,
+            null,
+            state.lastCitations,
+            state.lastWebCitations
+        );
     }
 
     // ========================================
@@ -979,6 +1319,32 @@
             });
         }
 
+        if (DOM.btnPreviousSessions) {
+            DOM.btnPreviousSessions.addEventListener('click', openSessionsModal);
+        }
+
+        if (DOM.btnCloseSessionsModal) {
+            DOM.btnCloseSessionsModal.addEventListener('click', closeSessionsModal);
+        }
+
+        if (DOM.sessionsModal) {
+            DOM.sessionsModal.addEventListener('click', (e) => {
+                if (e.target === DOM.sessionsModal) {
+                    closeSessionsModal();
+                }
+            });
+        }
+
+        if (DOM.sessionSearchInput) {
+            DOM.sessionSearchInput.addEventListener('input', (e) => {
+                renderSessionsList(e.target.value);
+            });
+        }
+
+        if (DOM.btnClearAllSessions) {
+            DOM.btnClearAllSessions.addEventListener('click', clearAllSavedSessions);
+        }
+
         if (DOM.btnCloseCitations) {
             DOM.btnCloseCitations.addEventListener('click', () => {
                 playClickSound();
@@ -999,13 +1365,15 @@
             }
         });
 
-        // Global Shortcuts (Alt+N for new session, Escape for closing drawers)
+        // Global Shortcuts (Alt+N for new session, Escape for closing drawers/modals)
         document.addEventListener('keydown', (e) => {
             if (e.altKey && (e.key === 'n' || e.key === 'N')) {
                 e.preventDefault();
                 clearSession();
             } else if (e.key === 'Escape') {
-                if (DOM.citationsBar && !DOM.citationsBar.classList.contains('hidden')) {
+                if (DOM.sessionsModal && !DOM.sessionsModal.classList.contains('hidden')) {
+                    closeSessionsModal();
+                } else if (DOM.citationsBar && !DOM.citationsBar.classList.contains('hidden')) {
                     DOM.citationsBar.classList.add('hidden');
                 }
             }
@@ -1022,6 +1390,7 @@
         initTextareaAutoResize();
         initKbSearchFilter();
         initUnifiedDrawerTabs();
+        loadSavedSessionsFromStorage();
         initEventListeners();
         initSystemState();
 
