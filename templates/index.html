@@ -18,7 +18,7 @@
         rel="stylesheet">
 
     <!-- Main Stylesheet -->
-    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="stylesheet" href="/static/css/style.css?v=2.1">
 
     <!-- Markdown Parser -->
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
@@ -30,9 +30,7 @@
     <div class="ambient-glow-top" aria-hidden="true"></div>
     <div class="ambient-glow-bottom" aria-hidden="true"></div>
     <div class="grid-background" aria-hidden="true"></div>
-    <div class="scanline-overlay" aria-hidden="true"></div>
-
-    <!-- MAIN INTERFACE CONTAINER -->
+    <div class="scanline-overlay" aria-hidden="true"></div>    <!-- MAIN INTERFACE CONTAINER -->
     <div class="app-layout">
 
         <!-- TOP NAVIGATION & STATUS BAR -->
@@ -50,7 +48,7 @@
                         stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                         <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
                         <polyline points="2 17 12 22 22 17"></polyline>
-                        <polyline points="2 12 12 17 22 12"></polyline>
+                        <polyline points="2 12 17 22 12"></polyline>
                     </svg>
                 </div>
                 <div class="brand-text-container">
@@ -60,16 +58,33 @@
             </div>
 
             <div class="status-zone">
+                <div class="defcon-pill" id="defcon-pill" title="Defense Readiness Condition Posture">
+                    <span class="defcon-dot"></span>
+                    <span class="defcon-text">DEFCON 1 // READY</span>
+                </div>
+
                 <div class="telemetry-item hidden-mobile" aria-label="Knowledge base statistics">
                     <span class="telemetry-label">INGESTED KNOWLEDGE</span>
                     <span class="telemetry-value" id="header-kb-count">-- DOCS</span>
                 </div>
                 <div class="telemetry-divider hidden-mobile" aria-hidden="true"></div>
+
                 <div class="status-indicator-pill online" id="system-status-pill" role="status" aria-live="polite">
                     <span class="indicator-dot online" aria-hidden="true"></span>
                     <span id="status-text">SYSTEM ONLINE // SECURE</span>
                 </div>
                 <div class="telemetry-divider" aria-hidden="true"></div>
+
+                <button class="header-action-btn" id="btn-audio-toggle" type="button" title="Toggle Tactical Audio Feedback (Muted by default)">
+                    <svg class="audio-icon audio-muted" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+                        <line x1="23" y1="9" x2="17" y2="15"></line>
+                        <line x1="17" y1="9" x2="23" y2="15"></line>
+                    </svg>
+                    <span class="btn-text hidden-mobile">AUDIO OFF</span>
+                </button>
+
+                <div class="telemetry-divider hidden-mobile" aria-hidden="true"></div>
                 <div class="hud-time-display" id="hud-clock" aria-label="Current UTC time">00:00:00 UTC</div>
             </div>
         </header>
@@ -84,7 +99,7 @@
                 <!-- Action Controls -->
                 <div class="sidebar-section">
                     <button class="tactical-btn primary-btn" id="btn-new-session" type="button"
-                        title="Start a clean tactical analysis thread">
+                        title="Start a clean tactical analysis thread (Alt + N)">
                         <svg class="btn-icon" width="16" height="16" viewBox="0 0 24 24" fill="none"
                             stroke="currentColor" stroke-width="2" aria-hidden="true">
                             <line x1="12" y1="5" x2="12" y2="19"></line>
@@ -92,6 +107,24 @@
                         </svg>
                         <span>NEW INTEL SESSION</span>
                     </button>
+
+                    <div class="sidebar-row-buttons">
+                        <button class="tactical-btn secondary-btn" id="btn-export-chat" type="button" title="Export current thread to Markdown file">
+                            <svg class="btn-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                <polyline points="7 10 12 15 17 10"></polyline>
+                                <line x1="12" y1="15" x2="12" y2="3"></line>
+                            </svg>
+                            <span>EXPORT</span>
+                        </button>
+                        <button class="tactical-btn secondary-btn danger-hover" id="btn-clear-chat" type="button" title="Clear current stream thread">
+                            <svg class="btn-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="3 6 5 6 21 6"></polyline>
+                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                            </svg>
+                            <span>CLEAR</span>
+                        </button>
+                    </div>
                 </div>
 
                 <!-- Engine & Layer Configuration -->
@@ -111,10 +144,10 @@
                         <label for="select-model" class="field-label">TARGET AI ENGINE</label>
                         <div class="select-wrapper">
                             <select id="select-model" class="tactical-select" aria-label="Select AI model">
-                                <option value="gpt-4.1-nano-2025-04-14" selected>GPT-4.1 Nano (Strategic Fast)</option>
-                                <option value="gpt-4o">GPT-4o (Full Intelligence Core)</option>
-                                <option value="gpt-4o-mini">GPT-4o Mini (Tactical Edge)</option>
-                                <option value="llama3.1:latest">Llama 3.1 (Local Ollama Engine)</option>
+                                <option value="gpt-4.1-nano-2025-04-14" selected>⚡ GPT-4.1 Nano (Strategic Fast)</option>
+                                <option value="gpt-4o">🧠 GPT-4o (Full Intelligence Core)</option>
+                                <option value="gpt-4o-mini">🛡️ GPT-4o Mini (Tactical Edge)</option>
+                                <option value="llama3.1:latest">💻 Llama 3.1 (Local Ollama Engine)</option>
                             </select>
                             <svg class="select-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none"
                                 stroke="currentColor" stroke-width="2" aria-hidden="true">
@@ -139,7 +172,7 @@
                             <span class="field-label">LIVE WEB INTEL LAYER</span>
                             <span class="field-subtext">Real-time Internet Intelligence</span>
                         </div>
-                        <label class="tactical-switch" title="Toggle DuckDuckGo internet web search layer">
+                        <label class="tactical-switch" title="Toggle internet web search layer">
                             <input type="checkbox" id="toggle-web-search" checked aria-describedby="web-desc">
                             <span class="slider web-slider" aria-hidden="true"></span>
                         </label>
@@ -192,9 +225,18 @@
                                 <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
                                 <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
                             </svg>
-                            KNOWLEDGE BASE SOURCES
+                            KNOWLEDGE SOURCES
                         </h2>
                         <span class="kb-badge-count" id="kb-count" aria-label="4 knowledge sources">4</span>
+                    </div>
+
+                    <!-- Filter Box for Knowledge Sources -->
+                    <div class="kb-search-box">
+                        <svg class="kb-search-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="11" cy="11" r="8"></circle>
+                            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                        </svg>
+                        <input type="text" id="kb-search-input" class="kb-search-input" placeholder="Filter sources..." aria-label="Filter knowledge base sources">
                     </div>
 
                     <div class="kb-source-list" id="kb-source-container" role="list"
@@ -242,7 +284,7 @@
                     <div class="welcome-card" id="welcome-card">
                         <div class="welcome-hero">
                             <div class="hero-icon-glow" aria-hidden="true">
-                                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                                     stroke-width="2">
                                     <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
                                     <polyline points="2 17 12 22 22 17"></polyline>
@@ -250,11 +292,11 @@
                                 </svg>
                             </div>
                             <div class="hero-content">
-                                <div class="hero-badge">OPERATIONAL SYSTEM INITIALIZED</div>
-                                <h2 class="hero-title">STRA AI Tactical Intelligence Platform</h2>
+                                <div class="hero-badge">OPERATIONAL COMMAND CENTER INITIALIZED</div>
+                                <h2 class="hero-title">STRA AI Tactical Intelligence Operating Platform</h2>
                                 <p class="hero-description">
-                                    Next-generation defense & threat intelligence operating core with OpenAI streaming engine,
-                                    proprietary military/cyber guardrails, localized RAG knowledge retrieval, and live internet web threat telemetry.
+                                    Next-generation defense & threat intelligence operating core with streaming inference engine,
+                                    proprietary military/cyber guardrails, localized RAG retrieval, and real-time internet threat telemetry.
                                 </p>
                             </div>
                         </div>
@@ -270,7 +312,7 @@
                                     </div>
                                     <span class="feature-title">Security & Audit</span>
                                 </div>
-                                <p class="feature-desc">Active rate-limiting, token auth controls, and structured security logging.</p>
+                                <p class="feature-desc">Active rate-limiting, token auth controls, and structured security audit logging.</p>
                             </div>
 
                             <div class="welcome-feature">
@@ -302,7 +344,7 @@
                                     </div>
                                     <span class="feature-title">Live Internet Recon</span>
                                 </div>
-                                <p class="feature-desc">Real-time web search retrieval for breaking threats & critical vulnerabilities.</p>
+                                <p class="feature-desc">Real-time web search retrieval for breaking threat actor activity & zero-days.</p>
                             </div>
 
                             <div class="welcome-feature">
@@ -317,12 +359,12 @@
                                     </div>
                                     <span class="feature-title">Source Citations</span>
                                 </div>
-                                <p class="feature-desc">Traceable inline context citations with confidence scores & document refs.</p>
+                                <p class="feature-desc">Traceable context citations with relevance confidence scores and document refs.</p>
                             </div>
                         </div>
 
                         <div class="quick-launch-container">
-                            <span class="launch-label">QUICK LAUNCH TACTICAL QUERY:</span>
+                            <span class="launch-label">QUICK LAUNCH TACTICAL QUERIES:</span>
                             <div class="launch-pills">
                                 <button class="launch-pill-btn"
                                     data-prompt="Analyze recent ransomware campaigns targeting critical infrastructure and outline MITRE ATT&CK mitigations."
@@ -345,50 +387,38 @@
 
                 </div>
 
-                <!-- RAG CITATIONS PANEL / DRAWER -->
-                <div class="citations-bar hidden" id="citations-bar" aria-label="RAG intelligence sources">
+                <!-- UNIFIED INTELLIGENCE DRAWER / PANEL -->
+                <div class="citations-bar hidden" id="citations-bar" aria-label="Intelligence context drawer">
                     <div class="citations-header">
-                        <div class="citations-title-group">
-                            <svg class="cit-icon" width="16" height="16" viewBox="0 0 24 24" fill="none"
-                                stroke="currentColor" stroke-width="2" aria-hidden="true">
-                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                                <polyline points="14 2 14 8 20 8"></polyline>
-                                <line x1="16" y1="13" x2="8" y2="13"></line>
-                                <line x1="16" y1="17" x2="8" y2="17"></line>
-                                <polyline points="10 9 9 9 8 9"></polyline>
-                            </svg>
-                            <span class="citations-title">RETRIEVED RAG INTELLIGENCE SOURCES</span>
+                        <div class="drawer-tabs" role="tablist">
+                            <button class="drawer-tab active" id="tab-rag-sources" role="tab" aria-selected="true" type="button">
+                                <span>📚 RAG KNOWLEDGE BASE</span>
+                                <span class="tab-badge" id="rag-tab-badge">0</span>
+                            </button>
+                            <button class="drawer-tab" id="tab-web-sources" role="tab" aria-selected="false" type="button">
+                                <span>🌐 LIVE RECON SOURCES</span>
+                                <span class="tab-badge web-badge" id="web-tab-badge">0</span>
+                            </button>
                         </div>
                         <button class="close-citations" id="btn-close-citations" type="button"
-                            title="Close citations drawer" aria-label="Close RAG citations">
+                            title="Close intelligence drawer" aria-label="Close drawer">
                             &times;
                         </button>
                     </div>
-                    <div class="citations-list" id="citations-list"></div>
+
+                    <!-- RAG Tab Content -->
+                    <div class="citations-tab-content active" id="tab-content-rag">
+                        <div class="citations-list" id="citations-list"></div>
+                    </div>
+
+                    <!-- WEB Tab Content -->
+                    <div class="citations-tab-content hidden" id="tab-content-web">
+                        <div class="citations-list" id="web-citations-list"></div>
+                    </div>
                 </div>
 
-                <!-- WEB CITATIONS PANEL / DRAWER -->
-                <div class="citations-bar web-citations-bar hidden" id="web-citations-bar"
-                    aria-label="Live internet recon sources">
-                    <div class="citations-header">
-                        <div class="citations-title-group">
-                            <svg class="cit-icon web-icon" width="16" height="16" viewBox="0 0 24 24" fill="none"
-                                stroke="currentColor" stroke-width="2" aria-hidden="true">
-                                <circle cx="12" cy="12" r="10"></circle>
-                                <line x1="2" y1="12" x2="22" y2="12"></line>
-                                <path
-                                    d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z">
-                                </path>
-                            </svg>
-                            <span class="citations-title web-title">LIVE INTERNET RECON SOURCES</span>
-                        </div>
-                        <button class="close-citations" id="btn-close-web-citations" type="button"
-                            title="Close web citations drawer" aria-label="Close web citations">
-                            &times;
-                        </button>
-                    </div>
-                    <div class="citations-list" id="web-citations-list"></div>
-                </div>
+                <!-- LEGACY / FALLBACK WEB CITATIONS BAR (Controlled via JS) -->
+                <div class="citations-bar web-citations-bar hidden" id="web-citations-bar" aria-label="Live internet recon sources"></div>
 
                 <!-- INPUT & CONTROL BAR -->
                 <div class="input-stage">

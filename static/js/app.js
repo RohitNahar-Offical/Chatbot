@@ -1,6 +1,7 @@
 /**
- * STRA AI — TACTICAL INTERFACE ENGINE (v3.0 Modern Platform)
- * Enhanced state management, accessibility, real-time SSE streaming, and responsive UI
+ * STRA AI — TACTICAL INTELLIGENCE ENGINE (v3.0 Operational Platform)
+ * Fine-tuned state management, Web Audio API sound feedback, message response tools,
+ * knowledge search filtering, unified intelligence drawers, and keyboard shortcuts.
  */
 
 (function () {
@@ -31,10 +32,64 @@
         conversationHistory: [],
         isStreaming: false,
         activeAbortController: null,
-        systemStatus: 'online', // 'online' | 'degraded' | 'offline'
+        systemStatus: 'online',
         knowledgeSources: [],
-        hasUserInteracted: false
+        hasUserInteracted: false,
+        audioEnabled: false,
+        speechSynthesisUtterance: null,
+        speakingMessageElem: null
     };
+
+    // ========================================
+    // WEB AUDIO API SYNTHESIZER
+    // ========================================
+
+    let audioCtx = null;
+
+    function getAudioContext() {
+        if (!audioCtx && typeof window.AudioContext !== 'undefined') {
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+        if (audioCtx && audioCtx.state === 'suspended') {
+            audioCtx.resume();
+        }
+        return audioCtx;
+    }
+
+    function playTone(freq, type = 'sine', duration = 0.08, vol = 0.05) {
+        if (!state.audioEnabled) return;
+        try {
+            const ctx = getAudioContext();
+            if (!ctx) return;
+
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+
+            osc.type = type;
+            osc.frequency.setValueAtTime(freq, ctx.currentTime);
+
+            gain.gain.setValueAtTime(vol, ctx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + duration);
+
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+
+            osc.start();
+            osc.stop(ctx.currentTime + duration);
+        } catch (e) {
+            // Audio context fallback ignore
+        }
+    }
+
+    function playClickSound() {
+        playTone(800, 'triangle', 0.04, 0.04);
+    }
+
+    function playChimeSound() {
+        playTone(523.25, 'sine', 0.1, 0.06);
+        setTimeout(() => playTone(659.25, 'sine', 0.12, 0.06), 80);
+        setTimeout(() => playTone(783.99, 'sine', 0.18, 0.06), 160);
+    }
 
     // ========================================
     // DOM REFERENCES
@@ -48,6 +103,9 @@
         btnSend: document.getElementById('btn-send'),
         btnStop: document.getElementById('btn-stop'),
         btnNewSession: document.getElementById('btn-new-session'),
+        btnExportChat: document.getElementById('btn-export-chat'),
+        btnClearChat: document.getElementById('btn-clear-chat'),
+        btnAudioToggle: document.getElementById('btn-audio-toggle'),
         btnToggleSidebar: document.getElementById('btn-toggle-sidebar'),
         sidebarPanel: document.getElementById('sidebar-panel'),
         selectModel: document.getElementById('select-model'),
@@ -57,6 +115,7 @@
         hudClock: document.getElementById('hud-clock'),
         headerKbCount: document.getElementById('header-kb-count'),
         kbCount: document.getElementById('kb-count'),
+        kbSearchInput: document.getElementById('kb-search-input'),
         systemStatusPill: document.getElementById('system-status-pill'),
         statusText: document.getElementById('status-text'),
         citationsBar: document.getElementById('citations-bar'),
@@ -64,7 +123,12 @@
         btnCloseCitations: document.getElementById('btn-close-citations'),
         webCitationsBar: document.getElementById('web-citations-bar'),
         webCitationsList: document.getElementById('web-citations-list'),
-        btnCloseWebCitations: document.getElementById('btn-close-web-citations')
+        tabRagSources: document.getElementById('tab-rag-sources'),
+        tabWebSources: document.getElementById('tab-web-sources'),
+        tabContentRag: document.getElementById('tab-content-rag'),
+        tabContentWeb: document.getElementById('tab-content-web'),
+        ragTabBadge: document.getElementById('rag-tab-badge'),
+        webTabBadge: document.getElementById('web-tab-badge')
     };
 
     // ========================================
@@ -112,7 +176,7 @@
     }
 
     // ========================================
-    // MARKDOWN CONFIGURATION
+    // MARKDOWN CONFIGURATION & CODE COPY
     // ========================================
 
     function configureMarked() {
@@ -127,12 +191,45 @@
 
         const renderer = new marked.Renderer();
         renderer.code = function (code, language) {
-            const lang = language || '';
-            return `<pre><code class="language-${escapeHtml(lang)}">${escapeHtml(code)}</code></pre>`;
+            const lang = language || 'code';
+            const escapedCode = escapeHtml(code);
+
+            return `
+                <div class="code-block-container">
+                    <div class="code-header">
+                        <span class="code-lang">💻 ${lang.toUpperCase()}</span>
+                        <button class="code-copy-btn" onclick="window.straCopyCode(this)" type="button">
+                            📋 COPY CODE
+                        </button>
+                    </div>
+                    <pre><code class="language-${escapeHtml(lang)}">${escapedCode}</code></pre>
+                </div>
+            `;
         };
 
         marked.setOptions({ renderer });
     }
+
+    // Attach global code copy handler
+    window.straCopyCode = function (btn) {
+        const container = btn.closest('.code-block-container');
+        if (!container) return;
+        const codeElem = container.querySelector('code');
+        if (!codeElem) return;
+
+        navigator.clipboard.writeText(codeElem.innerText).then(() => {
+            playClickSound();
+            const originalHTML = btn.innerHTML;
+            btn.innerHTML = '✅ COPIED!';
+            btn.style.color = 'var(--accent-emerald)';
+            setTimeout(() => {
+                btn.innerHTML = originalHTML;
+                btn.style.color = '';
+            }, 1800);
+        }).catch(err => {
+            console.error('Failed to copy code block:', err);
+        });
+    };
 
     // ========================================
     // CLOCK & TELEMETRY
@@ -183,17 +280,16 @@
         if (dot) {
             dot.className = `indicator-dot ${config.class}`;
         }
-
-        announceToScreenReader(`System status: ${config.text}`);
     }
 
     // ========================================
-    // API INITIALIZATION
+    // API INITIALIZATION & KNOWLEDGE SEARCH
     // ========================================
 
     async function initSystemState() {
         await fetchSystemStatus();
         await fetchKnowledgeBase();
+        initAudioToggleState();
     }
 
     async function fetchSystemStatus() {
@@ -231,7 +327,12 @@
 
     function renderKnowledgeSources(sources) {
         const container = document.getElementById('kb-source-container');
-        if (!container || !sources.length) return;
+        if (!container) return;
+
+        if (!sources.length) {
+            container.innerHTML = '<div class="source-item" style="color: var(--text-muted); font-size: 0.72rem;">No matching sources</div>';
+            return;
+        }
 
         container.innerHTML = sources.map(source => {
             const category = (source.category || 'DEFENSE').toUpperCase();
@@ -252,6 +353,67 @@
         if (cat.includes('cisa')) return 'cisa';
         if (cat.includes('osint')) return 'osint';
         return 'defense';
+    }
+
+    function initKbSearchFilter() {
+        if (!DOM.kbSearchInput) return;
+        DOM.kbSearchInput.addEventListener('input', (e) => {
+            const query = e.target.value.toLowerCase().trim();
+            if (!query) {
+                renderKnowledgeSources(state.knowledgeSources);
+                return;
+            }
+
+            const filtered = state.knowledgeSources.filter(src =>
+                src.doc_title.toLowerCase().includes(query) ||
+                (src.category && src.category.toLowerCase().includes(query)) ||
+                (src.filename && src.filename.toLowerCase().includes(query))
+            );
+
+            renderKnowledgeSources(filtered);
+        });
+    }
+
+    // ========================================
+    // AUDIO TOGGLE STATE
+    // ========================================
+
+    function initAudioToggleState() {
+        const saved = localStorage.getItem('stra_audio_enabled');
+        state.audioEnabled = saved === 'true';
+
+        updateAudioBtnUI();
+
+        if (DOM.btnAudioToggle) {
+            DOM.btnAudioToggle.addEventListener('click', () => {
+                state.audioEnabled = !state.audioEnabled;
+                localStorage.setItem('stra_audio_enabled', state.audioEnabled);
+                updateAudioBtnUI();
+                if (state.audioEnabled) {
+                    playTone(600, 'sine', 0.1, 0.08);
+                }
+            });
+        }
+    }
+
+    function updateAudioBtnUI() {
+        if (!DOM.btnAudioToggle) return;
+        const icon = DOM.btnAudioToggle.querySelector('.audio-icon');
+        const textSpan = DOM.btnAudioToggle.querySelector('.btn-text');
+
+        if (state.audioEnabled) {
+            DOM.btnAudioToggle.classList.add('active');
+            if (textSpan) textSpan.textContent = 'AUDIO ON';
+            if (icon) {
+                icon.innerHTML = `<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>`;
+            }
+        } else {
+            DOM.btnAudioToggle.classList.remove('active');
+            if (textSpan) textSpan.textContent = 'AUDIO OFF';
+            if (icon) {
+                icon.innerHTML = `<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><line x1="23" y1="9" x2="17" y2="15"></line><line x1="17" y1="9" x2="23" y2="15"></line>`;
+            }
+        }
     }
 
     // ========================================
@@ -275,7 +437,7 @@
     }
 
     // ========================================
-    // MESSAGE RENDERING
+    // MESSAGE RENDERING & TOOLBAR
     // ========================================
 
     function appendUserMessageDOM(text) {
@@ -291,7 +453,6 @@
         }
 
         scrollToBottom();
-        announceToScreenReader('Message sent');
     }
 
     function createAssistantBubbleDOM() {
@@ -326,12 +487,135 @@
         }
     }
 
+    function attachAssistantToolbar(wrapperElem, assistantText) {
+        if (!wrapperElem || wrapperElem.querySelector('.msg-toolbar')) return;
+
+        const toolbar = document.createElement('div');
+        toolbar.className = 'msg-toolbar';
+
+        toolbar.innerHTML = `
+            <button class="toolbar-btn btn-copy-msg" type="button" title="Copy full Markdown response">
+                📋 COPY
+            </button>
+            <button class="toolbar-btn btn-tts-msg" type="button" title="Read response aloud (Text-to-Speech)">
+                🔊 READ
+            </button>
+            <button class="toolbar-btn btn-download-msg" type="button" title="Download response report">
+                💾 SAVE
+            </button>
+            <button class="toolbar-btn btn-retry-msg" type="button" title="Regenerate intelligence response">
+                🔄 REGENERATE
+            </button>
+        `;
+
+        // Copy Handler
+        const btnCopy = toolbar.querySelector('.btn-copy-msg');
+        btnCopy.addEventListener('click', () => {
+            navigator.clipboard.writeText(assistantText).then(() => {
+                playClickSound();
+                btnCopy.textContent = '✅ COPIED!';
+                setTimeout(() => { btnCopy.textContent = '📋 COPY'; }, 1800);
+            });
+        });
+
+        // TTS Read Aloud Handler
+        const btnTts = toolbar.querySelector('.btn-tts-msg');
+        btnTts.addEventListener('click', () => {
+            toggleSpeechSynthesis(assistantText, btnTts);
+        });
+
+        // Download Handler
+        const btnDownload = toolbar.querySelector('.btn-download-msg');
+        btnDownload.addEventListener('click', () => {
+            downloadTextFile(assistantText, `STRA_AI_Intel_Report_${Date.now()}.md`);
+        });
+
+        // Retry Handler
+        const btnRetry = toolbar.querySelector('.btn-retry-msg');
+        btnRetry.addEventListener('click', () => {
+            if (state.isStreaming) return;
+            const lastUserMsg = [...state.conversationHistory].reverse().find(m => m.role === 'user');
+            if (lastUserMsg && DOM.userInput) {
+                DOM.userInput.value = lastUserMsg.content;
+                handleFormSubmit();
+            }
+        });
+
+        wrapperElem.appendChild(toolbar);
+    }
+
+    function toggleSpeechSynthesis(text, btnElem) {
+        if (!('speechSynthesis' in window)) return;
+
+        if (window.speechSynthesis.speaking) {
+            window.speechSynthesis.cancel();
+            if (state.speakingMessageElem) {
+                state.speakingMessageElem.classList.remove('speaking');
+                state.speakingMessageElem.textContent = '🔊 READ';
+            }
+            if (state.speakingMessageElem === btnElem) {
+                state.speakingMessageElem = null;
+                return;
+            }
+        }
+
+        const plainText = text.replace(/[#*`_~[\]()]/g, '');
+        const utterance = new SpeechSynthesisUtterance(plainText);
+        utterance.rate = 1.0;
+        utterance.pitch = 1.0;
+
+        utterance.onend = () => {
+            btnElem.classList.remove('speaking');
+            btnElem.textContent = '🔊 READ';
+            state.speakingMessageElem = null;
+        };
+
+        state.speakingMessageElem = btnElem;
+        btnElem.classList.add('speaking');
+        btnElem.textContent = '⏹️ STOP';
+        window.speechSynthesis.speak(utterance);
+    }
+
+    function downloadTextFile(content, filename) {
+        const blob = new Blob([content], { type: 'text/markdown;charset=utf-8;' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+
     // ========================================
-    // CITATIONS
+    // UNIFIED INTELLIGENCE DRAWER & CITATIONS
     // ========================================
 
+    function initUnifiedDrawerTabs() {
+        if (DOM.tabRagSources && DOM.tabWebSources) {
+            DOM.tabRagSources.addEventListener('click', () => switchDrawerTab('rag'));
+            DOM.tabWebSources.addEventListener('click', () => switchDrawerTab('web'));
+        }
+    }
+
+    function switchDrawerTab(tabType) {
+        playClickSound();
+        if (tabType === 'rag') {
+            if (DOM.tabRagSources) DOM.tabRagSources.classList.add('active');
+            if (DOM.tabWebSources) DOM.tabWebSources.classList.remove('active');
+            if (DOM.tabContentRag) DOM.tabContentRag.classList.remove('hidden');
+            if (DOM.tabContentWeb) DOM.tabContentWeb.classList.add('hidden');
+        } else {
+            if (DOM.tabWebSources) DOM.tabWebSources.classList.add('active');
+            if (DOM.tabRagSources) DOM.tabRagSources.classList.remove('active');
+            if (DOM.tabContentWeb) DOM.tabContentWeb.classList.remove('hidden');
+            if (DOM.tabContentRag) DOM.tabContentRag.classList.add('hidden');
+        }
+    }
+
     function renderCitationsDrawer(citations) {
-        if (!citations || citations.length === 0 || !DOM.citationsList) return;
+        if (!citations || !citations.length || !DOM.citationsList) return;
+
+        if (DOM.ragTabBadge) DOM.ragTabBadge.textContent = citations.length;
 
         DOM.citationsList.innerHTML = citations.map(c => `
             <div class="citation-card">
@@ -341,8 +625,28 @@
             </div>
         `).join('');
 
-        DOM.citationsBar.classList.remove('hidden');
-        announceToScreenReader(`Retrieved ${citations.length} RAG knowledge sources`);
+        if (DOM.citationsBar) DOM.citationsBar.classList.remove('hidden');
+        switchDrawerTab('rag');
+    }
+
+    function renderWebCitationsDrawer(webCitations) {
+        if (!webCitations || !webCitations.length || !DOM.webCitationsList) return;
+
+        if (DOM.webTabBadge) DOM.webTabBadge.textContent = webCitations.length;
+
+        DOM.webCitationsList.innerHTML = webCitations.map(c => `
+            <div class="citation-card web-citation-card">
+                <div class="cit-cat">[WEB INTEL] ${escapeHtml(c.source)}</div>
+                <div class="cit-title">
+                    <a href="${escapeHtml(c.url)}" target="_blank" rel="noopener noreferrer" class="web-citation-link">
+                        ${escapeHtml(c.title)} ↗
+                    </a>
+                </div>
+                <div class="cit-sec">${escapeHtml(c.snippet)}</div>
+            </div>
+        `).join('');
+
+        if (DOM.citationsBar) DOM.citationsBar.classList.remove('hidden');
     }
 
     function getOrCreateCitationBadgeContainer(wrapperElem) {
@@ -359,44 +663,16 @@
         const container = getOrCreateCitationBadgeContainer(wrapperElem);
         const badge = document.createElement('div');
         badge.className = 'citation-badge';
-        badge.innerHTML = `📎 ${citations.length} RAG Knowledge Source Citation(s)`;
+        badge.innerHTML = `📎 ${citations.length} RAG Knowledge Citation(s)`;
         badge.setAttribute('role', 'button');
         badge.setAttribute('tabindex', '0');
 
-        const toggleCitations = () => {
-            DOM.citationsBar.classList.toggle('hidden');
-            const isHidden = DOM.citationsBar.classList.contains('hidden');
-            announceToScreenReader(isHidden ? 'Citations closed' : 'Citations opened');
-        };
-
-        badge.addEventListener('click', toggleCitations);
-        badge.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault();
-                toggleCitations();
-            }
+        badge.addEventListener('click', () => {
+            if (DOM.citationsBar) DOM.citationsBar.classList.toggle('hidden');
+            switchDrawerTab('rag');
         });
 
         container.appendChild(badge);
-    }
-
-    function renderWebCitationsDrawer(webCitations) {
-        if (!webCitations || webCitations.length === 0 || !DOM.webCitationsList) return;
-
-        DOM.webCitationsList.innerHTML = webCitations.map(c => `
-            <div class="citation-card web-citation-card">
-                <div class="cit-cat">[WEB INTEL] ${escapeHtml(c.source)}</div>
-                <div class="cit-title">
-                    <a href="${escapeHtml(c.url)}" target="_blank" rel="noopener noreferrer" class="web-citation-link">
-                        ${escapeHtml(c.title)} ↗
-                    </a>
-                </div>
-                <div class="cit-sec">${escapeHtml(c.snippet)}</div>
-            </div>
-        `).join('');
-
-        DOM.webCitationsBar.classList.remove('hidden');
-        announceToScreenReader(`Retrieved ${webCitations.length} live internet sources`);
     }
 
     function appendWebCitationBadge(wrapperElem, webCitations) {
@@ -407,18 +683,9 @@
         badge.setAttribute('role', 'button');
         badge.setAttribute('tabindex', '0');
 
-        const toggleCitations = () => {
-            DOM.webCitationsBar.classList.toggle('hidden');
-            const isHidden = DOM.webCitationsBar.classList.contains('hidden');
-            announceToScreenReader(isHidden ? 'Web citations closed' : 'Web citations opened');
-        };
-
-        badge.addEventListener('click', toggleCitations);
-        badge.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault();
-                toggleCitations();
-            }
+        badge.addEventListener('click', () => {
+            if (DOM.citationsBar) DOM.citationsBar.classList.toggle('hidden');
+            switchDrawerTab('web');
         });
 
         container.appendChild(badge);
@@ -431,32 +698,25 @@
     function startStreamingState() {
         state.isStreaming = true;
         updateStreamingUI(true);
-        announceToScreenReader('AI is processing your request');
+        playTone(700, 'sine', 0.05, 0.03);
     }
 
     function finishStreamingState() {
         state.isStreaming = false;
         updateStreamingUI(false);
         state.activeAbortController = null;
+        playChimeSound();
     }
 
     function updateStreamingUI(isStreaming) {
-        if (DOM.btnSend) {
-            DOM.btnSend.classList.toggle('hidden', isStreaming);
-        }
-        if (DOM.btnStop) {
-            DOM.btnStop.classList.toggle('hidden', !isStreaming);
-        }
-        if (DOM.typingIndicator) {
-            DOM.typingIndicator.classList.toggle('hidden', !isStreaming);
-        }
-        if (DOM.userInput) {
-            DOM.userInput.disabled = isStreaming;
-        }
+        if (DOM.btnSend) DOM.btnSend.classList.toggle('hidden', isStreaming);
+        if (DOM.btnStop) DOM.btnStop.classList.toggle('hidden', !isStreaming);
+        if (DOM.typingIndicator) DOM.typingIndicator.classList.toggle('hidden', !isStreaming);
+        if (DOM.userInput) DOM.userInput.disabled = isStreaming;
     }
 
     // ========================================
-    // FORM SUBMISSION & API INTERACTION
+    // FORM SUBMISSION & SSE CHAT STREAM
     // ========================================
 
     async function handleFormSubmit() {
@@ -464,6 +724,8 @@
 
         const text = DOM.userInput.value.trim();
         if (!text) return;
+
+        playClickSound();
 
         if (!state.hasUserInteracted) {
             state.hasUserInteracted = true;
@@ -545,6 +807,7 @@
             }
 
             state.conversationHistory.push({ role: 'assistant', content: fullAssistantText });
+            attachAssistantToolbar(wrapper, fullAssistantText);
 
         } catch (err) {
             if (err.name !== 'AbortError') {
@@ -605,7 +868,6 @@
 
     function handleStreamError(error, bubbleElem) {
         let errorMessage = '\n\n⚠️ **Operational Exception**: ';
-
         const isNetworkError = error.message.toLowerCase().includes('failed to fetch') ||
             error.message.toLowerCase().includes('networkerror') ||
             error.message.toLowerCase().includes('network error');
@@ -620,10 +882,12 @@
     }
 
     // ========================================
-    // SESSION MANAGEMENT
+    // EXPORT & CLEAR SESSION
     // ========================================
 
     function clearSession() {
+        playClickSound();
+
         if (state.isStreaming && state.activeAbortController) {
             state.activeAbortController.abort();
         }
@@ -639,7 +903,6 @@
         }
 
         if (DOM.citationsBar) DOM.citationsBar.classList.add('hidden');
-        if (DOM.webCitationsBar) DOM.webCitationsBar.classList.add('hidden');
 
         if (DOM.userInput) {
             DOM.userInput.value = '';
@@ -648,6 +911,22 @@
 
         finishStreamingState();
         announceToScreenReader('Session cleared, new session started');
+    }
+
+    function exportChatHistory() {
+        if (!state.conversationHistory.length) return;
+        playClickSound();
+
+        let mdContent = `# STRA AI — Tactical Intelligence Session Report\n`;
+        mdContent += `**Date**: ${new Date().toISOString()}\n`;
+        mdContent += `**Total Exchanges**: ${state.conversationHistory.length}\n\n---\n\n`;
+
+        state.conversationHistory.forEach((msg, idx) => {
+            const roleName = msg.role === 'user' ? 'ANALYST // USER' : 'STRA AI // INTELLIGENCE CORE';
+            mdContent += `### [${idx + 1}] ${roleName}\n\n${msg.content}\n\n---\n\n`;
+        });
+
+        downloadTextFile(mdContent, `STRA_AI_Session_Report_${Date.now()}.md`);
     }
 
     // ========================================
@@ -664,7 +943,7 @@
 
         if (DOM.userInput) {
             DOM.userInput.addEventListener('keydown', (e) => {
-                if (e.key === 'Enter' && (e.ctrlKey || e.metaKey || !e.shiftKey)) {
+                if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
                     e.preventDefault();
                     handleFormSubmit();
                 }
@@ -675,8 +954,17 @@
             DOM.btnNewSession.addEventListener('click', clearSession);
         }
 
+        if (DOM.btnExportChat) {
+            DOM.btnExportChat.addEventListener('click', exportChatHistory);
+        }
+
+        if (DOM.btnClearChat) {
+            DOM.btnClearChat.addEventListener('click', clearSession);
+        }
+
         if (DOM.btnToggleSidebar && DOM.sidebarPanel) {
             DOM.btnToggleSidebar.addEventListener('click', () => {
+                playClickSound();
                 DOM.sidebarPanel.classList.toggle('open');
             });
         }
@@ -693,17 +981,12 @@
 
         if (DOM.btnCloseCitations) {
             DOM.btnCloseCitations.addEventListener('click', () => {
-                DOM.citationsBar.classList.add('hidden');
+                playClickSound();
+                if (DOM.citationsBar) DOM.citationsBar.classList.add('hidden');
             });
         }
 
-        if (DOM.btnCloseWebCitations) {
-            DOM.btnCloseWebCitations.addEventListener('click', () => {
-                DOM.webCitationsBar.classList.add('hidden');
-            });
-        }
-
-        // Attach listeners to prompt chips and quick launch pills (using delegation)
+        // Attach listeners to prompt chips and quick launch pills
         document.addEventListener('click', (e) => {
             const btn = e.target.closest('.chip-btn, .launch-pill-btn');
             if (btn) {
@@ -716,13 +999,14 @@
             }
         });
 
+        // Global Shortcuts (Alt+N for new session, Escape for closing drawers)
         document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape') {
+            if (e.altKey && (e.key === 'n' || e.key === 'N')) {
+                e.preventDefault();
+                clearSession();
+            } else if (e.key === 'Escape') {
                 if (DOM.citationsBar && !DOM.citationsBar.classList.contains('hidden')) {
                     DOM.citationsBar.classList.add('hidden');
-                }
-                if (DOM.webCitationsBar && !DOM.webCitationsBar.classList.contains('hidden')) {
-                    DOM.webCitationsBar.classList.add('hidden');
                 }
             }
         });
@@ -736,10 +1020,12 @@
         configureMarked();
         initClock();
         initTextareaAutoResize();
+        initKbSearchFilter();
+        initUnifiedDrawerTabs();
         initEventListeners();
         initSystemState();
 
-        console.log('[STRA AI] Tactical Interface Engine v3.0 initialized');
+        console.log('[STRA AI] Tactical Interface Engine v3.0 fully initialized');
     }
 
     if (document.readyState === 'loading') {
