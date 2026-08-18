@@ -1,0 +1,26 @@
+# Environment variable files (contains private API keys)
+.env
+.env.*
+!.env.example
+
+# Python bytecode and cache
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Log files (except .gitkeep)
+logs/*.log
+*.log
+
+# IDE & Editor settings
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# System / OS generated files
+.DS_Store
+Thumbs.db

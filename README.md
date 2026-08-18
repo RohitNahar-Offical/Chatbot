@@ -41,16 +41,19 @@
 - OpenAI API Key
 
 ### 2. Environment Setup
-Copy `.env.example` to `.env` and set your OpenAI API key:
+Copy `.env.example` to create your local `.env` file (which is ignored by Git to keep your API keys private):
 ```bash
 cp .env.example .env
 ```
-Inside `.env`:
+Inside `.env`, configure your environment variables and API keys:
 ```env
 OPENAI_API_KEY=your_actual_openai_api_key
-RATE_LIMIT_PER_MIN=30
-STRA_ACCESS_KEY=
+UNSLOTH_API_KEY=your_actual_unsloth_api_key
+SERPER_API_KEY=your_optional_serper_key
 ```
+
+> [!CAUTION]
+> **Security Warning**: Never commit `.env` or hardcode API keys in source files when sharing or publishing this repository publicly. Keep your API keys private.
 
 ### 3. Install Dependencies
 ```bash
